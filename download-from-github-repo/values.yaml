@@ -56,9 +56,9 @@ job:
   #  pvcName: 
   download:
     image:
-      repository: ghcr.io/opertusmundi/curl-jq 
+      repository: ghcr.io/eosc-lot-1/curl-jq
       pullPolicy: IfNotPresent
-      tag: "8-alpine"
+      tag: "8"
   process:
     image:
       repository: alpine
