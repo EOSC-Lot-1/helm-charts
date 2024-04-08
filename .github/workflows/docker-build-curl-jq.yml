@@ -30,8 +30,10 @@ jobs:
       with:
         images: |
           ghcr.io/eosc-lot-1/curl-jq
-    - uses: docker/setup-buildx-action@v2
-    - uses: docker/build-push-action@v4
+    - uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker
+    - uses: docker/build-push-action@v5
       with:
         context: ./curl-jq/docker/
         file: ./curl-jq/docker/Dockerfile
