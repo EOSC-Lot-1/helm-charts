@@ -3,9 +3,9 @@ run-name: Build container image with GnuPG suite
 
 on: 
   push:
-    paths:
-    - 'gnupg/**'
-    - '.github/workflows/docker-build-gnupg.yml'
+    #paths:
+    #- 'gnupg/**'
+    #- '.github/workflows/docker-build-gnupg.yml'
     branches:
     - 'gnupg'
     tags:
