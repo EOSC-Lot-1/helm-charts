@@ -12,6 +12,14 @@ on:
     - '0.*'
     - '1.*'
 
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  packages: write
+  repository-projects: read
+  statuses: read
+
 jobs:
 
   build_image:
@@ -42,6 +50,4 @@ jobs:
         tags: |
           ghcr.io/eosc-lot-1/curl-jq:8
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
 
