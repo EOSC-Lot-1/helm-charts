@@ -1,0 +1,83 @@
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+checkout:
+  image: 
+    repository: bitnami/git
+    pullPolicy: IfNotPresent
+    tag: 2.30.1
+  securityContext:
+    # uid of bitnami user
+    runAsUser: 1000
+    runAsGroup: 1000
+  # home of bitnami user
+  homeDir: /home/bitnami
+  # name of the secret holding the SSH key (as "ssh-privatekey") for the Git repository
+  sshKey: 
+    secretName: ssh-key
+  # name of the configmap holding a known-hosts file (as "ssh_known_hosts") for connecting to the Git host
+  knownHosts: 
+    configMapName: ssh-known-hosts
+  # target repository with SQL migrations
+  repository:
+    url: git@github.com:example/helloworld.git
+    branch: master
+    path: src/main/resources/db/migration
+
+flyway:
+  image:
+    repository: flyway/flyway
+    pullPolicy: IfNotPresent
+    tag: "9.15"
+  # Flyway subcommand to execute (info, migrate, validate)   
+  command: "info"
+  # Flyway configuration
+  schemas: "public"
+  defaultSchema: "public"
+  table: "_schema_version"
+  baselineVersion: "1_0_0"
+  baselineOnMigrate: true
+  # database connection URL
+  url: >-  
+    jdbc:postgresql://postgres.default.svc.cluster.local/helloworld?
+  # database user
+  user: postgres
+  # name of the secret holding the password (as "password") for the database user
+  password:
+    secretName: postgres-password

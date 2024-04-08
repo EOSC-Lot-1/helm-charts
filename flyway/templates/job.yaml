@@ -1,0 +1,121 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "flyway.jobName" . }}
+  labels:
+    {{- include "flyway.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "flyway.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "flyway.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: work
+        emptyDir: {}
+      - name: ssh-key
+        secret:
+          secretName: {{ .Values.checkout.sshKey.secretName }}
+          defaultMode: 0600
+      - name: ssh-known-hosts
+        configMap:
+          name: {{ .Values.checkout.knownHosts.configMapName }}
+          defaultMode: 0660
+      initContainers:
+      - name: checkout
+        image: "{{ .Values.checkout.image.repository }}:{{ .Values.checkout.image.tag }}" 
+        imagePullPolicy: {{ .Values.checkout.image.pullPolicy }}
+        securityContext: 
+          {{- toYaml .Values.checkout.securityContext | nindent 10 }}
+        env:
+        - name: REPO_URL
+          value: {{ .Values.checkout.repository.url }}
+        - name: REPO_BRANCH
+          value: {{ .Values.checkout.repository.branch }}
+        - name: PATH_TO_CHECKOUT
+          value: {{ .Values.checkout.repository.path }}
+        - name: SSH_KEY_FILE
+          value: {{ .Values.checkout.homeDir }}/.ssh/key
+        - name: GIT_SSH_COMMAND
+          value: >-
+            ssh -i $(SSH_KEY_FILE) -o IdentitiesOnly=true
+        command:
+        - sh
+        - -eux
+        args:
+        - -c
+        - |-
+          git clone --sparse --depth 1 --branch ${REPO_BRANCH} ${REPO_URL} .
+          git sparse-checkout init --cone && git sparse-checkout set ${PATH_TO_CHECKOUT}
+        workingDir: {{ .Values.checkout.homeDir }}/code
+        volumeMounts:
+        - name: work
+          mountPath: {{ .Values.checkout.homeDir }}/code
+        - name: ssh-key
+          mountPath: {{ .Values.checkout.homeDir }}/.ssh/key
+          subPath: ssh-privatekey
+        - name: ssh-known-hosts
+          mountPath: {{ .Values.checkout.homeDir }}/.ssh/known_hosts
+          subPath: ssh_known_hosts
+      containers:
+      - name: flyway
+        image: "{{ .Values.flyway.image.repository }}:{{ .Values.flyway.image.tag }}"
+        imagePullPolicy: {{ .Values.flyway.image.pullPolicy }}
+        args:
+        - {{ .Values.flyway.command }}
+        env:
+        - name: PATH_TO_CHECKOUT
+          value: {{ .Values.checkout.repository.path }}
+        - name: FLYWAY_SCHEMAS
+          value: {{ .Values.flyway.schemas }}
+        - name: FLYWAY_DEFAULT_SCHEMA
+          value: {{ .Values.flyway.defaultSchema }}
+        - name: FLYWAY_TABLE
+          value: {{ .Values.flyway.table }}
+        - name: FLYWAY_BASELINE_VERSION
+          value: {{ .Values.flyway.baselineVersion | squote }}
+        - name: FLYWAY_BASELINE_ON_MIGRATE
+          value: {{ .Values.flyway.baselineOnMigrate | squote }}
+        - name: FLYWAY_URL
+          value: {{ .Values.flyway.url | squote }}
+        - name: FLYWAY_USER
+          value: {{ .Values.flyway.user }}
+        - name: FLYWAY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.flyway.password.secretName }}
+              key: password
+        volumeMounts:
+        - name: work
+          mountPath: /flyway/sql
+          subPathExpr: $(PATH_TO_CHECKOUT) 
+          readOnly: true
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
