@@ -4,7 +4,7 @@ run-name: Build container image for curl-jq
 on: 
   push:
     paths:
-    - 'curl/**'
+    - 'curl-jq/**'
     - '.github/workflows/docker-build-curl-jq.yml'
     branches:
     - 'curl-jq'
