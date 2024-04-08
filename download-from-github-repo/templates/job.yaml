@@ -1,0 +1,103 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "download-from-github-repo.jobName" . }}
+  labels:
+    {{- include "download-from-github-repo.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "download-from-github-repo.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "download-from-github-repo.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      {{- if .Values.job.persistence }}
+      - name: work
+        persistentVolumeClaim:
+          claimName: {{ .Values.job.persistence.pvcName }}
+      {{- else }}
+      - name: work
+        emptyDir: {}
+      {{- end }}{{/* if .Values.job.persistence */}}
+      initContainers:
+      - name: download
+        image: "{{ .Values.job.download.image.repository }}:{{ .Values.job.download.image.tag }}"
+        imagePullPolicy: {{ .Values.job.download.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        {{- with .Values.githubRepo }}
+        - name: repoName
+          value: {{ .name }}
+        - name: accessToken
+          valueFrom:
+            secretKeyRef:
+              name: {{ .accessToken.secretName }}
+              key: {{ .accessToken.key }}
+        - name: repoTag
+          value: {{ .tag }}
+        {{- end }}{{/* .Values.githubRepo */}}
+        - name: filePath
+          value: {{ .Values.job.filePath  }}
+        - name: outputFilePath
+          value: {{ .Values.job.outputFilePath }}
+        - name: apiUrl
+          # https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28
+          value: >-
+            https://$(accessToken)@api.github.com/repos/$(repoName)/contents/$(filePath)?ref=$(repoTag)
+        command: [ "sh", "-u", "-e" ]
+        args:
+        - -c
+        - >-
+          curl -f -v --create-dirs --output ${outputFilePath} $(curl -f -v "${apiUrl}"| jq -r .download_url)
+        workingDir: /work
+        volumeMounts:
+        - name: work
+          mountPath: /work
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      containers:
+      - name: process
+        image: "{{ .Values.job.process.image.repository }}:{{ .Values.job.process.image.tag }}"
+        imagePullPolicy: {{ .Values.job.process.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        - name: outputFilePath
+          value: {{ .Values.job.outputFilePath }}
+        {{- with .Values.job.process.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}{{/* with .Values.job.process.extraEnv */}}
+        command: {{- toYaml (.Values.job.process.command) | nindent 8 }}
+        workingDir: /work
+        volumeMounts:
+        - name: work
+          mountPath: /work
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

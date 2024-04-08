@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 0.1.0
+description: Download a file from a github repo
+name: download-from-github-repo
+type: application
+version: 0.1.0

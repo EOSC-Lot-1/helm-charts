@@ -1,0 +1,75 @@
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+githubRepo:
+  name: NowhereLand/helloworld
+  tag: main
+  # a personal access token with read permissions on the repo
+  accessToken: 
+    secretName: github-access-token
+    key: token
+
+job:
+  # path to file (relative to github repo)
+  filePath: path/to/1.xt 
+  outputFilePath: out/1.txt
+  #persistence:
+  #  pvcName: 
+  download:
+    image:
+      repository: ghcr.io/opertusmundi/curl-jq 
+      pullPolicy: IfNotPresent
+      tag: "8-alpine"
+  process:
+    image:
+      repository: alpine
+      pullPolicy: IfNotPresent
+      tag: "3.19"
+    extraEnv: []
+    #- name: foo
+    #  value: Bar  
+    command: 
+    - sh
+    - -c
+    - >-
+      stat ${outputFilePath}
+  
