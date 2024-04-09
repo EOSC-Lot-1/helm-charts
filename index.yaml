@@ -1,0 +1,36 @@
+apiVersion: v1
+entries:
+  download-from-github-repo:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2024-04-09T21:07:38.194535797+03:00"
+    description: Download a file from a github repo
+    digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
+    name: download-from-github-repo
+    type: application
+    urls:
+    - download-from-github-repo-0.1.0.tgz
+    version: 0.1.0
+  flyway:
+  - apiVersion: v2
+    appVersion: "9"
+    created: "2024-04-09T21:07:38.194860257+03:00"
+    description: A Helm chart for applying database migrations with Flyway
+    digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
+    name: flyway
+    type: application
+    urls:
+    - flyway-0.1.0.tgz
+    version: 0.1.0
+  postgresql-cluster:
+  - apiVersion: v2
+    appVersion: "15"
+    created: "2024-04-09T21:07:38.195890389+03:00"
+    description: A Helm chart for a PostgreSQL master/standby cluster
+    digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
+    name: postgresql-cluster
+    type: application
+    urls:
+    - postgresql-cluster-0.4.0.tgz
+    version: 0.4.0
+generated: "2024-04-09T21:07:38.194074478+03:00"
