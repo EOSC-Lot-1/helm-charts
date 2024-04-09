@@ -1,0 +1,58 @@
+image:
+  repository: mariadb
+  pullPolicy: IfNotPresent
+  tag: "10.11"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext: 
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+
+resources: 
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+runScript:
+  input:
+    pvcName: scripts
+    subPath: ~
+    filePath: 1.sql
+  database:
+    name: example
+    host: mariadb
+    port: 3306
+    user: someone
+    password:
+      secretName: someone-password
+      key: password
+
+

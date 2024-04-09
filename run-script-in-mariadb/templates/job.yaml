@@ -1,0 +1,104 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "run-script-in-mariadb.jobName" . }}
+  labels:
+    {{- include "run-script-in-mariadb.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "run-script-in-mariadb.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "run-script-in-mariadb.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: input
+        persistentVolumeClaim:
+          claimName: {{ .Values.runScript.input.pvcName }}
+      - name: home
+        emptyDir: {}
+      initContainers:
+      - name: prepare-config
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        {{- with .Values.runScript.database.password }}
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .secretName }}
+              key: {{ .key }}
+        {{- end }}{{/* with .Values.runScript.database.password */}}
+        command: [ "sh", "-ue" ]
+        args:
+        - -c
+        - |-
+          touch ~/.my.cnf && chmod -v u=rw,g=,o= ~/.my.cnf
+          echo "[client]\npassword=${DB_PASSWORD}" > ~/.my.cnf
+        volumeMounts:
+        - name: home
+          mountPath: /var/lib/mysql
+      containers:
+      - name: run-script
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        {{- with .Values.runScript.database }}
+        - name: DB_HOST
+          value: {{ .host }}
+        - name: DB_PORT
+          value: {{ .port | quote }}
+        - name: DB_NAME
+          value: {{ .name }}
+        - name: DB_USER
+          value: {{ .user }}
+        {{- end }}{{/* with .Values.runScript.database */}}
+        - name: INPUT_FILE
+          value: {{ .Values.runScript.input.filePath }}
+        command: [ "sh", "-xue" ]
+        args:
+        - -c
+        - |-
+          mariadb --host ${DB_HOST} --port ${DB_PORT} --user ${DB_USER} --database ${DB_NAME} < ${INPUT_FILE}
+        workingDir: /work
+        volumeMounts:
+        - name: home
+          mountPath: /var/lib/mysql
+        - name: input
+          mountPath: /work
+          {{- with .Values.runScript.input.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* with .Values.input.subPath */}}
+          readOnly: true
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
