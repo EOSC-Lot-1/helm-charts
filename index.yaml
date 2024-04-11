@@ -3,7 +3,7 @@ entries:
   download-from-github-repo:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-10T02:19:51.729386695+03:00"
+    created: "2024-04-12T00:08:31.664436024+03:00"
     description: Download a file from a github repo
     digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
     name: download-from-github-repo
@@ -14,7 +14,7 @@ entries:
   flyway:
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-04-10T02:19:51.729968214+03:00"
+    created: "2024-04-12T00:08:31.718930069+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
     name: flyway
@@ -25,7 +25,17 @@ entries:
   postgresql-cluster:
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-10T02:19:51.731774454+03:00"
+    created: "2024-04-12T00:08:31.721085724+03:00"
+    description: A Helm chart for a PostgreSQL master/standby cluster
+    digest: 81f8710b0daace259b8eab071f0ad92509f2a1704572896c802a993325754cf3
+    name: postgresql-cluster
+    type: application
+    urls:
+    - postgresql-cluster-0.4.1.tgz
+    version: 0.4.1
+  - apiVersion: v2
+    appVersion: "15"
+    created: "2024-04-12T00:08:31.720087758+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
     name: postgresql-cluster
@@ -36,7 +46,7 @@ entries:
   run-script-in-mariadb:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-10T02:19:51.732332412+03:00"
+    created: "2024-04-12T00:08:31.72137224+03:00"
     description: Run an SQL script on a MariaDB database
     digest: 8cef134bda30d7325c7e5564acbe9029ec67dbd22e50a4fe7defd75bdb7f5d9e
     name: run-script-in-mariadb
@@ -44,4 +54,4 @@ entries:
     urls:
     - run-script-in-mariadb-0.1.0.tgz
     version: 0.1.0
-generated: "2024-04-10T02:19:51.694242682+03:00"
+generated: "2024-04-12T00:08:31.663965483+03:00"
