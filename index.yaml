@@ -3,7 +3,7 @@ entries:
   download-from-github-repo:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-12T00:42:22.619062888+03:00"
+    created: "2024-04-12T18:16:10.896032438+03:00"
     description: Download a file from a github repo
     digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
     name: download-from-github-repo
@@ -14,7 +14,17 @@ entries:
   flyway:
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-04-12T00:42:22.61937414+03:00"
+    created: "2024-04-12T18:16:10.896717531+03:00"
+    description: A Helm chart for applying database migrations with Flyway
+    digest: e5f6942146673458d7a74bd254514fa14221a3b8ce878d582422720285a6504c
+    name: flyway
+    type: application
+    urls:
+    - flyway-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: "9"
+    created: "2024-04-12T18:16:10.896351881+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
     name: flyway
@@ -25,7 +35,7 @@ entries:
   postgresql-cluster:
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-12T00:42:22.684023126+03:00"
+    created: "2024-04-12T18:16:10.898866364+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 49737e243bf5b60e8ceca5440c066a2b2b6544fab00cad6ed50e30114db4b2e9
     name: postgresql-cluster
@@ -35,7 +45,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-12T00:42:22.620379226+03:00"
+    created: "2024-04-12T18:16:10.897850854+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
     name: postgresql-cluster
@@ -46,7 +56,7 @@ entries:
   run-script-in-mariadb:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-12T00:42:22.684420743+03:00"
+    created: "2024-04-12T18:16:10.899156964+03:00"
     description: Run an SQL script on a MariaDB database
     digest: 8cef134bda30d7325c7e5564acbe9029ec67dbd22e50a4fe7defd75bdb7f5d9e
     name: run-script-in-mariadb
@@ -54,4 +64,4 @@ entries:
     urls:
     - run-script-in-mariadb-0.1.0.tgz
     version: 0.1.0
-generated: "2024-04-12T00:42:22.618622713+03:00"
+generated: "2024-04-12T18:16:10.895579361+03:00"
