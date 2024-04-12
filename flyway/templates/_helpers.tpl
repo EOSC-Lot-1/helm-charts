@@ -63,6 +63,6 @@ Create the name of the service account to use
 
 
 {{- define "flyway.jobName" -}}
-{{ printf "%s-%s" (include "flyway.fullname" .) ((dict "repo" .Values.checkout.repository "command" .Values.flyway.command) | toJson | sha1sum | trunc 9) }}
+{{ printf "%s-%s-%s" (include "flyway.fullname" .) (.Values.flyway.command) ((dict "repo" .Values.checkout.repository "branch" .Values.checkout.repository.branch) | toJson | sha1sum | trunc 6) }}
 {{- end }}
 

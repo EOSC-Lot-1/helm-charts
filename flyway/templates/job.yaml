@@ -54,13 +54,15 @@ spec:
           value: {{ .Values.checkout.homeDir }}/.ssh/key
         - name: GIT_SSH_COMMAND
           value: >-
-            ssh -i $(SSH_KEY_FILE) -o IdentitiesOnly=true
+            ssh -i $(SSH_KEY_FILE) -o IdentitiesOnly=yes
         command:
         - sh
         - -eux
         args:
         - -c
         - |-
+          git config --global --add safe.directory ${PWD}
+          git config --global --add advice.detachedHead "false"
           git clone --sparse --depth 1 --branch ${REPO_BRANCH} ${REPO_URL} .
           git sparse-checkout init --cone && git sparse-checkout set ${PATH_TO_CHECKOUT}
         workingDir: {{ .Values.checkout.homeDir }}/code
@@ -69,7 +71,7 @@ spec:
           mountPath: {{ .Values.checkout.homeDir }}/code
         - name: ssh-key
           mountPath: {{ .Values.checkout.homeDir }}/.ssh/key
-          subPath: ssh-privatekey
+          subPath: private_key
         - name: ssh-known-hosts
           mountPath: {{ .Values.checkout.homeDir }}/.ssh/known_hosts
           subPath: ssh_known_hosts
@@ -77,6 +79,8 @@ spec:
       - name: flyway
         image: "{{ .Values.flyway.image.repository }}:{{ .Values.flyway.image.tag }}"
         imagePullPolicy: {{ .Values.flyway.image.pullPolicy }}
+        securityContext: 
+          {{- toYaml .Values.flyway.securityContext | nindent 10 }}
         args:
         - {{ .Values.flyway.command }}
         env:
