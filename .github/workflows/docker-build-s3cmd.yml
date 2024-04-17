@@ -1,5 +1,5 @@
-name: CI - gnupg
-run-name: Build container image with GnuPG suite
+name: CI - s3cmd
+run-name: Build container image with s3cmd
 
 on: 
   push:
