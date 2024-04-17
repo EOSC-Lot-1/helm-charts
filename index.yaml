@@ -3,7 +3,7 @@ entries:
   download-from-github-repo:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-17T18:54:44.905826043Z"
+    created: "2024-04-17T21:55:13.657731241Z"
     description: Download a file from a github repo
     digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
     name: download-from-github-repo
@@ -14,7 +14,7 @@ entries:
   flyway:
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-04-17T18:54:44.908639459Z"
+    created: "2024-04-17T21:55:13.659010715Z"
     description: A Helm chart for applying database migrations with Flyway
     digest: e5f6942146673458d7a74bd254514fa14221a3b8ce878d582422720285a6504c
     name: flyway
@@ -24,7 +24,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-04-17T18:54:44.907372856Z"
+    created: "2024-04-17T21:55:13.658328931Z"
     description: A Helm chart for applying database migrations with Flyway
     digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
     name: flyway
@@ -32,10 +32,21 @@ entries:
     urls:
     - flyway-0.1.0.tgz
     version: 0.1.0
+  mariadb-backup:
+  - apiVersion: v2
+    appVersion: "10.11"
+    created: "2024-04-17T21:55:13.659604055Z"
+    description: Backup a MariaDB database
+    digest: e250a43f1384116a45d72ddc15950805bf0bd65fe3f8a6b176ef664105d705b7
+    name: mariadb-backup
+    type: application
+    urls:
+    - mariadb-backup-0.2.0.tgz
+    version: 0.2.0
   mariadb-run-script:
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2024-04-17T18:54:44.909526589Z"
+    created: "2024-04-17T21:55:13.660259427Z"
     description: Run an SQL script on a MariaDB database
     digest: 23c2e988118cfd5f834742d6c0eda66273c1ecfd3fb11f74c5b7a967a3af0e76
     name: mariadb-run-script
@@ -46,7 +57,7 @@ entries:
   postgresql-cluster:
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-17T18:54:44.915784523Z"
+    created: "2024-04-17T21:55:13.664042647Z"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 49737e243bf5b60e8ceca5440c066a2b2b6544fab00cad6ed50e30114db4b2e9
     name: postgresql-cluster
@@ -56,7 +67,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-17T18:54:44.912235752Z"
+    created: "2024-04-17T21:55:13.662196013Z"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
     name: postgresql-cluster
@@ -64,4 +75,4 @@ entries:
     urls:
     - postgresql-cluster-0.4.0.tgz
     version: 0.4.0
-generated: "2024-04-17T18:54:44.90397019Z"
+generated: "2024-04-17T21:55:13.65682475Z"
