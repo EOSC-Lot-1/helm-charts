@@ -3,7 +3,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "run-script-in-mariadb.name" -}}
+{{- define "mariadb-run-script.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -12,7 +12,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "run-script-in-mariadb.fullname" -}}
+{{- define "mariadb-run-script.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -28,16 +28,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "run-script-in-mariadb.chart" -}}
+{{- define "mariadb-run-script.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "run-script-in-mariadb.labels" -}}
-helm.sh/chart: {{ include "run-script-in-mariadb.chart" . }}
-{{ include "run-script-in-mariadb.selectorLabels" . }}
+{{- define "mariadb-run-script.labels" -}}
+helm.sh/chart: {{ include "mariadb-run-script.chart" . }}
+{{ include "mariadb-run-script.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -47,17 +47,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "run-script-in-mariadb.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "run-script-in-mariadb.name" . }}
+{{- define "mariadb-run-script.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "mariadb-run-script.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "run-script-in-mariadb.serviceAccountName" -}}
+{{- define "mariadb-run-script.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "run-script-in-mariadb.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "mariadb-run-script.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -66,7 +66,7 @@ Create the name of the service account to use
 {{/*
 Name of the job
 */}}
-{{- define "run-script-in-mariadb.jobName" -}}
-{{ (include "run-script-in-mariadb.fullname" .) }}
+{{- define "mariadb-run-script.jobName" -}}
+{{ (include "mariadb-run-script.fullname" .) }}
 {{- end }}
 
