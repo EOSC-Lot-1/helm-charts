@@ -1,0 +1,107 @@
+# vim: set filetype=helm:
+
+{{- $outputFile := .Values.backup.outputFile.fileName| default (printf "%s~%s.sql.gz" .Values.backup.database.name (now| date "20060102150405")) }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "mariadb-backup.jobName" . }}
+  labels:
+    {{- include "mariadb-backup.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "mariadb-backup.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "mariadb-backup.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: output
+        persistentVolumeClaim:
+          claimName: {{ .Values.backup.outputFile.pvcName }}
+      - name: home
+        emptyDir: {}
+      initContainers:
+      - name: prepare-config
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        {{- with .Values.backup.database }}
+        - name: DB_HOST
+          value: {{ .host }}
+        - name: DB_PORT
+          value: {{ .port | quote }}
+        - name: DB_USER
+          value: {{ .user }}
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ .password.secretName }}
+              key: {{ .password.key }}
+        {{- end }}{{/* with .Values.backup.database */}}
+        command: [ "sh", "-ue" ]
+        args:
+        - -c
+        - |-
+          touch ~/.my.cnf && chmod -v u=rw,g=,o= ~/.my.cnf
+          echo "[client]\nhost=${DB_HOST}\nport=${DB_PORT}\nuser=${DB_USER}\npassword=${DB_PASS}" > ~/.my.cnf
+        volumeMounts:
+        - name: home
+          mountPath: /var/lib/mysql
+      containers:
+      - name: backup
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        - name: DB_NAME
+          value: {{ .Values.backup.database.name }}
+        - name: OUTPUT_FILE
+          value: {{ $outputFile }}
+        command:
+        - sh
+        - -xue
+        - -c
+        - |-
+          mariadb-dump --lock-tables -v ${DB_NAME} | gzip -c > ${OUTPUT_FILE}
+        workingDir: /work
+        volumeMounts:
+        - name: home
+          mountPath: /var/lib/mysql
+        {{- with .Values.backup.outputFile }}
+        - name: output
+          mountPath: /work
+          {{- with .subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* with .subPath */}}
+        {{- end }}{{/* with .Values.backup.outputFile */}}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
