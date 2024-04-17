@@ -43,9 +43,13 @@ affinity: {}
 
 runScript:
   input:
-    pvcName: scripts
-    subPath: ~
-    filePath: 1.sql
+    command: >-
+      SELECT now()
+  # or ...
+  #inputFile:
+  #  pvcName: scripts
+  #  subPath: ~
+  #  filePath: 1.sql
   database:
     name: example
     host: mariadb
