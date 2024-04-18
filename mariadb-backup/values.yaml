@@ -42,10 +42,16 @@ tolerations: []
 affinity: {}
 
 backup:
+  # target of the backup (in a PV)
   outputFile:
     pvcName: backups
     subPath: ~
     #fileName: backup.sql.gz
+  # (optional) upload the backup file to an S3 bucket
+  s3:
+    bucket: ~
+    #bucket: backups
+    #prefix: mariadb
   database:
     name: example
     host: mariadb
@@ -54,5 +60,14 @@ backup:
     password:
       secretName: someone-password
       key: password
+
+# s3cmd only needed if an s3 bucket is also specified
+s3cmd:
+  image:
+    repository: ghcr.io/eosc-lot-1/s3cmd
+    pullPolicy: IfNotPresent
+    tag: 2-alpine
+  config:
+    secretName: s3cmd-config
 
 
