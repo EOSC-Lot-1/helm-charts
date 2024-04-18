@@ -86,8 +86,13 @@ spec:
         - -xue
         - -c
         {{- if .Values.runScript.inputFile }}
+        {{- if .Values.runScript.inputFile.gzipped }}
+        - |-
+          gzip -d -c ${INPUT_FILE} | mariadb -Bv --database=${DB_NAME}
+        {{- else }} 
         - |-
           mariadb -Bv --database=${DB_NAME} < ${INPUT_FILE}
+        {{- end }}{{/* if .Values.runScript.inputFile.gzipped */}}
         {{- else }}
         - |- 
           mariadb -Bv --database=${DB_NAME} --execute="${INPUT_SQL}" 
