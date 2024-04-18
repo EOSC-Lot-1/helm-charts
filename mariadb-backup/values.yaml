@@ -52,6 +52,8 @@ backup:
     bucket: ~
     #bucket: backups
     #prefix: mariadb
+    # for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
+    encrypt: false
   database:
     name: example
     host: mariadb
@@ -69,5 +71,5 @@ s3cmd:
     tag: 2-alpine
   config:
     secretName: s3cmd-config
-
+  debug: false
 
