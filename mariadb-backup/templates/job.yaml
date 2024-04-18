@@ -35,13 +35,17 @@ spec:
       - name: output
         persistentVolumeClaim:
           claimName: {{ .Values.backup.outputFile.pvcName }}
-      - name: home
+      - name: mariadb-home
+        emptyDir: {}  
+      - name: temp
         emptyDir: {}
       {{- if .Values.backup.s3.bucket }}
       - name: s3cmd-config
         secret:
           secretName: {{ .Values.s3cmd.config.secretName }}
           defaultMode: 0640
+      - name: gnupg-home
+        emptyDir: {}
       {{- end }}
       initContainers:
       - name: prepare-config
@@ -70,7 +74,7 @@ spec:
           touch ~/.my.cnf && chmod -v u=rw,g=,o= ~/.my.cnf
           echo "[client]\nhost=${DB_HOST}\nport=${DB_PORT}\nuser=${DB_USER}\npassword=${DB_PASS}" > ~/.my.cnf
         volumeMounts:
-        - name: home
+        - name: mariadb-home
           mountPath: /var/lib/mysql
       - name: backup
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -90,7 +94,7 @@ spec:
           mariadb-dump --lock-tables -v ${DB_NAME} | gzip -c > "${OUTPUT_NAME}"
         workingDir: /work
         volumeMounts:
-        - name: home
+        - name: mariadb-home
           mountPath: /var/lib/mysql
         {{- with .Values.backup.outputFile }}
         - name: output
@@ -113,7 +117,14 @@ spec:
           value: {{ printf "s3://%s/%s/%s" (.Values.backup.s3.bucket) (.Values.backup.s3.prefix | default "") $outputName }}
         command:
         - s3cmd
+        {{- if .Values.s3cmd.debug }}
+        - --debug
+        {{- else }}
         - --verbose
+        {{- end }}{{/* if .Values.s3cmd.debug */}}
+        {{- if .Values.backup.s3.encrypt }}
+        - --encrypt
+        {{- end }}{{/* if .Values.backup.s3.encrypt */}}
         - --no-preserve
         - put
         - $(OUTPUT_NAME)
@@ -124,6 +135,10 @@ spec:
           mountPath: /.s3cfg
           subPath: s3cmd.conf
           readOnly: true
+        - name: gnupg-home
+          mountPath: /.gnupg
+        - name: temp
+          mountPath: /tmp
         {{- with .Values.backup.outputFile }}
         - name: output
           mountPath: /work
