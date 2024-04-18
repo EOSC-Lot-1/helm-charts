@@ -3,4 +3,4 @@ appVersion: "10.11"
 description: Run an SQL script on a MariaDB database
 name: mariadb-run-script
 type: application
-version: 0.2.0
+version: 0.3.0

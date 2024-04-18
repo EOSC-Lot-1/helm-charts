@@ -50,6 +50,7 @@ runScript:
   #  pvcName: scripts
   #  subPath: ~
   #  filePath: 1.sql
+  #  gzipped: false
   database:
     name: example
     host: mariadb
