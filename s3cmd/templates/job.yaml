@@ -1,0 +1,112 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "s3cmd.jobName" . }}
+  labels:
+    {{- include "s3cmd.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "s3cmd.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "s3cmd.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: s3cmd-config
+        secret:
+          secretName: {{ .Values.s3cmd.config.secretName }}
+          defaultMode: 0640
+      - name: gnupg-home
+        emptyDir: {}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ .Values.pv.pvcName }}
+      containers:
+      - name: "s3cmd"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        
+        env:
+        {{- with .Values.s3 }}
+        - name: S3_BASE_URL
+          value: {{ printf "s3://%s%s" (.bucket) ((empty .prefix) | ternary "" (print "/" .prefix)) }}
+        {{- end }}{{/* with .Values.s3 */}}
+        {{- with .Values.s3cmd }}
+        - name: LOCAL_FILE
+          value: {{ (eq "get" .command) | ternary (.get.to) (.put.from) }}
+        - name: REMOTE_FILE
+          value: {{ (eq "get" .command) | ternary (.get.from) (.put.to) }}
+        {{- end }}{{/* with .Values.s3cmd */}}
+        
+        command:
+        - s3cmd
+        - --verbose
+        
+        {{- with .Values.s3cmd }}
+        {{- if .debug }}
+        - --debug
+        {{- end }}{{/* if .debug */}}
+
+        {{- if eq "get" .command }}
+        - get
+        - $(S3_BASE_URL)/$(REMOTE_FILE)
+        - $(LOCAL_FILE)
+        {{- else if eq "put" .command }}
+        - put
+        - --no-preserve
+        {{- if .put.encrypt }}
+        - --encrypt
+        {{- end }}{{/* if .put.encrypt */}}
+        - $(LOCAL_FILE)
+        - $(S3_BASE_URL)/$(REMOTE_FILE)
+        {{- else }}
+        {{ fail "only get/put commands are supported!" }}
+        {{- end }}{{/* if eq "get" .Values.s3cmd.command */}}
+        {{- end }}{{/* with .Values.s3cmd */}}
+
+        workingDir: /data
+        volumeMounts:
+        - name: s3cmd-config
+          mountPath: /.s3cfg
+          subPath: s3cmd.conf
+          readOnly: true
+        - name: gnupg-home
+          mountPath: /.gnupg
+        - name: data
+          mountPath: /data
+          {{- with .Values.pv.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* with .Values.pv.subPath */}}
+          {{- if eq .Values.s3cmd.command "put" }}
+          readOnly: true
+          {{- end }}{{/* if eq .Values.s3cmd.command "put" */}}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
