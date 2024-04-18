@@ -63,10 +63,3 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
-{{/*
-Name of the job
-*/}}
-{{- define "mariadb-backup.jobName" -}}
-{{ (include "mariadb-backup.fullname" .) }}
-{{- end }}
-
