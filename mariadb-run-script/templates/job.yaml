@@ -2,9 +2,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "run-script-in-mariadb.jobName" . }}
+  name: {{ include "mariadb-run-script.jobName" . }}
   labels:
-    {{- include "run-script-in-mariadb.labels" . | nindent 4 }}
+    {{- include "mariadb-run-script.labels" . | nindent 4 }}
 spec:  
   backoffLimit: 1
   completions: 1
@@ -16,20 +16,22 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "run-script-in-mariadb.selectorLabels" . | nindent 8 }}
+        {{- include "mariadb-run-script.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "run-script-in-mariadb.serviceAccountName" . }}
+      serviceAccountName: {{ include "mariadb-run-script.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       volumes:
+      {{- with .Values.runScript.inputFile }}
       - name: input
         persistentVolumeClaim:
-          claimName: {{ .Values.runScript.input.pvcName }}
+          claimName: {{ .pvcName }}
+      {{- end }}{{/* with .Values.runScript.inputFile */}}
       - name: home
         emptyDir: {}
       initContainers:
@@ -39,19 +41,25 @@ spec:
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}
         env:
-        {{- with .Values.runScript.database.password }}
-        - name: DB_PASSWORD
+        {{- with .Values.runScript.database }}
+        - name: DB_HOST
+          value: {{ .host }}
+        - name: DB_PORT
+          value: {{ .port | quote }}
+        - name: DB_USER
+          value: {{ .user }}
+        - name: DB_PASS
           valueFrom:
             secretKeyRef:
-              name: {{ .secretName }}
-              key: {{ .key }}
-        {{- end }}{{/* with .Values.runScript.database.password */}}
+              name: {{ .password.secretName }}
+              key: {{ .password.key }}
+        {{- end }}{{/* with .Values.runScript.database */}}
         command: [ "sh", "-ue" ]
         args:
         - -c
         - |-
           touch ~/.my.cnf && chmod -v u=rw,g=,o= ~/.my.cnf
-          echo "[client]\npassword=${DB_PASSWORD}" > ~/.my.cnf
+          echo "[client]\nhost=${DB_HOST}\nport=${DB_PORT}\nuser=${DB_USER}\npassword=${DB_PASS}" > ~/.my.cnf
         volumeMounts:
         - name: home
           mountPath: /var/lib/mysql
@@ -63,32 +71,44 @@ spec:
           {{- toYaml .Values.securityContext | nindent 10 }}
         env:
         {{- with .Values.runScript.database }}
-        - name: DB_HOST
-          value: {{ .host }}
-        - name: DB_PORT
-          value: {{ .port | quote }}
         - name: DB_NAME
           value: {{ .name }}
-        - name: DB_USER
-          value: {{ .user }}
         {{- end }}{{/* with .Values.runScript.database */}}
+        {{- if .Values.runScript.inputFile }}
         - name: INPUT_FILE
-          value: {{ .Values.runScript.input.filePath }}
-        command: [ "sh", "-xue" ]
-        args:
+          value: {{ .Values.runScript.inputFile.filePath }}
+        {{- else }}
+        - name: INPUT_SQL
+          value: {{ .Values.runScript.input.command | quote }}
+        {{- end }}{{/* if .Values.runScript.inputFile */}}
+        command:
+        - sh
+        - -xue
         - -c
+        {{- if .Values.runScript.inputFile }}
+        {{- if .Values.runScript.inputFile.gzipped }}
         - |-
-          mariadb --host ${DB_HOST} --port ${DB_PORT} --user ${DB_USER} --database ${DB_NAME} < ${INPUT_FILE}
+          gzip -d -c ${INPUT_FILE} | mariadb -Bv --database=${DB_NAME}
+        {{- else }} 
+        - |-
+          mariadb -Bv --database=${DB_NAME} < ${INPUT_FILE}
+        {{- end }}{{/* if .Values.runScript.inputFile.gzipped */}}
+        {{- else }}
+        - |- 
+          mariadb -Bv --database=${DB_NAME} --execute="${INPUT_SQL}" 
+        {{- end }}{{/* if .Values.runScript.inputFile */}}
         workingDir: /work
         volumeMounts:
         - name: home
           mountPath: /var/lib/mysql
+        {{- with .Values.runScript.inputFile }}
         - name: input
           mountPath: /work
-          {{- with .Values.runScript.input.subPath }}
+          {{- with .subPath }}
           subPath: {{ . }}
-          {{- end }}{{/* with .Values.input.subPath */}}
+          {{- end }}{{/* with .subPath */}}
           readOnly: true
+        {{- end }}{{/* with .Values.runScript.inputFile */}}
         resources: {{- toYaml .Values.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
