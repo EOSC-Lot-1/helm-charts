@@ -1,11 +1,16 @@
 # vim: set filetype=helm:
+
+{{- $archiveName := (and (eq "put" .Values.s3cmd.command) (.Values.s3cmd.put.archive)) | ternary (printf "%s.tar.gz" (now | unixEpoch)) nil }}
+{{- $archiveFilePath := empty $archiveName | ternary nil (printf "/tmp/%s" $archiveName) }}
+
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "s3cmd.jobName" . }}
   labels:
     {{- include "s3cmd.labels" . | nindent 4 }}
-spec:  
+spec:
   backoffLimit: 1
   completions: 1
   parallelism: 1
@@ -26,6 +31,7 @@ spec:
       serviceAccountName: {{ include "s3cmd.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
       volumes:
       - name: s3cmd-config
         secret:
@@ -33,16 +39,52 @@ spec:
           defaultMode: 0640
       - name: gnupg-home
         emptyDir: {}
+      {{- if $archiveName }}
+      - name: temp
+        emptyDir: {}
+      {{- end }}{{/* if $archiveName */}}
       - name: data
         persistentVolumeClaim:
           claimName: {{ .Values.pv.pvcName }}
+
+      initContainers:
+      {{- if $archiveName }}
+      - name: "tar"
+        image: "busybox:1.36"
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        {{- with .Values.s3cmd }}
+        - name: INPUT_DIR
+          value: {{ empty .put.from | ternary "." .put.from }}
+        {{- end }}{{/* with .Values.s3cmd */}}
+        - name: ARCHIVE_FILE
+          value: {{ $archiveFilePath }}
+        command:
+        - tar
+        args:
+        - czv
+        - --file=$(ARCHIVE_FILE)
+        - --directory=$(INPUT_DIR)
+        - '.'
+        volumeMounts:
+        - name: temp
+          mountPath: /tmp
+        - name: data
+          mountPath: /data
+          {{- with .Values.pv.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* with .Values.pv.subPath */}}
+          readOnly: true
+        workingDir: /data
+      {{- end }}{{/* if $archiveName */}}
+
       containers:
       - name: "s3cmd"
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}
-        
         env:
         {{- with .Values.s3 }}
         - name: S3_BASE_URL
@@ -50,20 +92,17 @@ spec:
         {{- end }}{{/* with .Values.s3 */}}
         {{- with .Values.s3cmd }}
         - name: LOCAL_FILE
-          value: {{ (eq "get" .command) | ternary (.get.to) (.put.from) }}
+          value: {{ (eq "get" .command) | ternary (.get.to) ((empty $archiveName) | ternary .put.from $archiveFilePath) }}
         - name: REMOTE_FILE
           value: {{ (eq "get" .command) | ternary (.get.from) (.put.to) }}
         {{- end }}{{/* with .Values.s3cmd */}}
-        
         command:
         - s3cmd
         - --verbose
-        
         {{- with .Values.s3cmd }}
         {{- if .debug }}
         - --debug
         {{- end }}{{/* if .debug */}}
-
         {{- if eq "get" .command }}
         - get
         - $(S3_BASE_URL)/$(REMOTE_FILE)
@@ -80,7 +119,6 @@ spec:
         {{ fail "only get/put commands are supported!" }}
         {{- end }}{{/* if eq "get" .Values.s3cmd.command */}}
         {{- end }}{{/* with .Values.s3cmd */}}
-
         workingDir: /data
         volumeMounts:
         - name: s3cmd-config
@@ -89,6 +127,10 @@ spec:
           readOnly: true
         - name: gnupg-home
           mountPath: /.gnupg
+        {{- if $archiveName }}
+        - name: temp
+          mountPath: /tmp
+        {{ end }}{{/* if $archiveName */}}
         - name: data
           mountPath: /data
           {{- with .Values.pv.subPath }}
