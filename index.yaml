@@ -3,7 +3,7 @@ entries:
   download-from-github-repo:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-05-16T00:59:20.721370413+03:00"
+    created: "2024-05-29T14:42:09.042119142Z"
     description: Download a file from a github repo
     digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
     name: download-from-github-repo
@@ -14,7 +14,7 @@ entries:
   flyway:
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-05-16T00:59:20.722317716+03:00"
+    created: "2024-05-29T14:42:09.044037468Z"
     description: A Helm chart for applying database migrations with Flyway
     digest: e5f6942146673458d7a74bd254514fa14221a3b8ce878d582422720285a6504c
     name: flyway
@@ -24,7 +24,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-05-16T00:59:20.721884485+03:00"
+    created: "2024-05-29T14:42:09.043082945Z"
     description: A Helm chart for applying database migrations with Flyway
     digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
     name: flyway
@@ -35,7 +35,7 @@ entries:
   mariadb-backup:
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2024-05-16T00:59:20.723356127+03:00"
+    created: "2024-05-29T14:42:09.046044658Z"
     description: Backup a MariaDB database
     digest: c2eb694dd3bfca14970bbe32d7fc7540c325b6f0cdfdaf26e29258f3ed6e57f3
     name: mariadb-backup
@@ -45,7 +45,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2024-05-16T00:59:20.722997914+03:00"
+    created: "2024-05-29T14:42:09.045503289Z"
     description: Backup a MariaDB database
     digest: 93f57d857b782092abeb9695dcd2ec504d6a813ee272b00114ba3e0edd8503a4
     name: mariadb-backup
@@ -55,7 +55,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2024-05-16T00:59:20.722631097+03:00"
+    created: "2024-05-29T14:42:09.044855806Z"
     description: Backup a MariaDB database
     digest: e250a43f1384116a45d72ddc15950805bf0bd65fe3f8a6b176ef664105d705b7
     name: mariadb-backup
@@ -66,7 +66,7 @@ entries:
   mariadb-run-script:
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2024-05-16T00:59:20.724148741+03:00"
+    created: "2024-05-29T14:42:09.047240549Z"
     description: Run an SQL script on a MariaDB database
     digest: 724fd246ff4bc3195c6a25cf687b7f2dfcea1c642a9be4bb2c4e7860409c3282
     name: mariadb-run-script
@@ -76,7 +76,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2024-05-16T00:59:20.723636497+03:00"
+    created: "2024-05-29T14:42:09.046539275Z"
     description: Run an SQL script on a MariaDB database
     digest: 23c2e988118cfd5f834742d6c0eda66273c1ecfd3fb11f74c5b7a967a3af0e76
     name: mariadb-run-script
@@ -87,7 +87,7 @@ entries:
   postgresql-cluster:
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-05-16T00:59:20.728184253+03:00"
+    created: "2024-05-29T14:42:09.055232478Z"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 48a70286dabecc46e9d9eb88d7860631fb85a6a3f4f1991792898660971de263
     name: postgresql-cluster
@@ -97,7 +97,7 @@ entries:
     version: 0.4.3
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-05-16T00:59:20.726952959+03:00"
+    created: "2024-05-29T14:42:09.052556865Z"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 49737e243bf5b60e8ceca5440c066a2b2b6544fab00cad6ed50e30114db4b2e9
     name: postgresql-cluster
@@ -107,7 +107,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-05-16T00:59:20.725585985+03:00"
+    created: "2024-05-29T14:42:09.049707166Z"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
     name: postgresql-cluster
@@ -118,7 +118,17 @@ entries:
   s3cmd:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-05-16T00:59:20.728510441+03:00"
+    created: "2024-05-29T14:42:09.057096673Z"
+    description: A Helm chart for running an s3cmd get/put command
+    digest: aa9a3cf2e34317a834364c4f63720dc9709163011aac7fb56262a6b709008aea
+    name: s3cmd
+    type: application
+    urls:
+    - s3cmd-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2024-05-29T14:42:09.056182031Z"
     description: A Helm chart for running an s3cmd get/put command
     digest: 9579b8d801a0a70c17b41c87ac9c3161ec7615779b5c4d332cd20f47217ff56b
     name: s3cmd
@@ -126,4 +136,4 @@ entries:
     urls:
     - s3cmd-0.1.0.tgz
     version: 0.1.0
-generated: "2024-05-16T00:59:20.720922034+03:00"
+generated: "2024-05-29T14:42:09.040862487Z"
