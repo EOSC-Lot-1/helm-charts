@@ -1,0 +1,81 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "untar.jobName" . }}
+  labels:
+    {{- include "untar.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "untar.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "untar.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: input
+        persistentVolumeClaim:
+          claimName: {{ .Values.inputPv.pvcName }}
+      {{- if ne (.Values.inputPv.pvcName) (.Values.outputPv.pvcName) }}
+      - name: output
+        persistentVolumeClaim:
+          claimName: {{ .Values.outputPv.pvcName }}
+      {{ end }}{{/* if */}}
+      containers:
+      - name: "untar"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        volumeMounts:
+        - name: input
+          mountPath: /input
+          {{- with .Values.inputPv.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* witn .Values.inputPv.subPath */}}
+          readOnly: true
+        - name: {{ ne (.Values.inputPv.pvcName) (.Values.outputPv.pvcName) | ternary "output" "input" }}
+          mountPath: /output
+          {{- with .Values.outputPv.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* witn .Values.inputPv.subPath */}}
+        workingDir: /output
+        env:
+          []
+        command:
+        - tar
+        - {{ eq .Values.untar.compression "bzip2" | ternary "xj" "xz" }}
+        - --file
+        - {{ printf "/input/%s" .Values.untar.from | clean }}
+        - --directory
+        - {{ .Values.untar.to | clean }}
+        {{- with .Values.untar.options }}
+        {{ toYaml . | nindent 8 }}
+        {{- end  }}{{/* with .Values.untar.options */}}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

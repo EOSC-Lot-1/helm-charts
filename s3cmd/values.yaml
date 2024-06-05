@@ -59,11 +59,12 @@ s3cmd:
   get:
     # S3 object under s3://BUCKET/PREFIX
     from: 1.txt
-    # file under subPath of PV 
+    # file under subPath of PV
     to: 1.txt
   put:
+    archive: false
     encrypt: false
-    # file under subPath of PV 
+    # file under subPath of PV; can be a directory or '.', if `archive` setting is enabled
     from:
     #from: 1.txt
     # S3 object under s3://BUCKET/PREFIX

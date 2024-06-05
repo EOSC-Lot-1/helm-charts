@@ -1,0 +1,70 @@
+image:
+  repository: debian
+  pullPolicy: IfNotPresent
+  tag: "12.5-slim"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+     drop:
+     - ALL
+  #readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  #runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+inputPv:
+  pvcName: foo
+  #subPath: x
+
+outputPv: 
+  pvcName: bar
+  #subPath: y
+    
+untar:
+  # options to pass to tar command
+  options:
+  - --verbose
+  #- --skip-old-files
+  
+  # compression can be empty or "gzip" or "bzip2"
+  compression: gzip
+  
+  # path to the input archive (relative to input PV)
+  from: something.tar.gz
+  # path to the output folder (relative to output PV)
+  to: .
+
