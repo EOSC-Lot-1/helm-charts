@@ -1,5 +1,14 @@
 # vim: set filetype=helm:
 
+{{- with .Values.s3cmd }}
+{{- if and (eq "put" .command) (ne "s3" (urlParse .put.to).scheme ) }}
+{{ fail "expected s3://BUCKET/PREFIX/NAME as the destination of `put` command!" }}
+{{- end }}
+{{- if and (eq "get" .command) (ne "s3" (urlParse .get.from).scheme ) }}
+{{ fail "expected s3://BUCKET/PREFIX/NAME as the source of `get` command!" }}
+{{- end }}
+{{- end }}{{/* with .Values.s3cmd */}}
+
 {{- $archiveName := (and (eq "put" .Values.s3cmd.command) (.Values.s3cmd.put.archive)) | ternary (printf "%s.tar.gz" (now | unixEpoch)) nil }}
 {{- $archiveFilePath := empty $archiveName | ternary nil (printf "/tmp/%s" $archiveName) }}
 
@@ -85,17 +94,7 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}
-        env:
-        {{- with .Values.s3 }}
-        - name: S3_BASE_URL
-          value: {{ printf "s3://%s%s" (.bucket) ((empty .prefix) | ternary "" (print "/" .prefix)) }}
-        {{- end }}{{/* with .Values.s3 */}}
-        {{- with .Values.s3cmd }}
-        - name: LOCAL_FILE
-          value: {{ (eq "get" .command) | ternary (.get.to) ((empty $archiveName) | ternary .put.from $archiveFilePath) }}
-        - name: REMOTE_FILE
-          value: {{ (eq "get" .command) | ternary (.get.from) (.put.to) }}
-        {{- end }}{{/* with .Values.s3cmd */}}
+        env: []
         command:
         - s3cmd
         - --verbose
@@ -103,18 +102,26 @@ spec:
         {{- if .debug }}
         - --debug
         {{- end }}{{/* if .debug */}}
+        {{/* get  */}} 
         {{- if eq "get" .command }}
         - get
-        - $(S3_BASE_URL)/$(REMOTE_FILE)
-        - $(LOCAL_FILE)
+        {{- if or (hasSuffix "/" .get.from) .recursive }}
+        - --recursive
+        {{- end }}{{/* if recursive */}}
+        - {{ .get.from }}
+        - {{ .get.to }}
+        {{/* put */}}
         {{- else if eq "put" .command }}
         - put
+        {{- if or (and (hasSuffix "/" .put.from) (empty $archiveName)) .recursive }}
+        - --recursive
+        {{- end }}{{/* if recursive */}}
         - --no-preserve
         {{- if .put.encrypt }}
         - --encrypt
         {{- end }}{{/* if .put.encrypt */}}
-        - $(LOCAL_FILE)
-        - $(S3_BASE_URL)/$(REMOTE_FILE)
+        - {{ empty $archiveName | ternary .put.from $archiveFilePath }}
+        - {{ .put.to }}
         {{- else }}
         {{ fail "only get/put commands are supported!" }}
         {{- end }}{{/* if eq "get" .Values.s3cmd.command */}}
