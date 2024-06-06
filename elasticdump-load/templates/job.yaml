@@ -1,0 +1,114 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "elasticdump-load.jobName" . }}
+  labels:
+    {{- include "elasticdump-load.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "elasticdump-load.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "elasticdump-load.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: admin-password
+        secret:
+          secretName: {{ (get .Values "elasticdump-load").adminPassword.secretRef }}
+      - name: cacerts
+        configMap:
+          name: {{ (get .Values "elasticdump-load").cacert.configMapRef | default "cacerts" }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ .Values.pv.pvcName }} 
+      - name: work
+        emptyDir: {}
+      initContainers:
+      - name: prepare-auth
+        image: busybox:1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        volumeMounts:
+        - name: admin-password
+          mountPath: /secrets/admin-password
+          subPath: password
+          readOnly: true
+        - name: work
+          mountPath: /work
+        workingDir: /work
+        command:
+        - sh
+        - -ue
+        - -c
+        - |-
+          touch auth && chmod 0600 -v auth
+          echo -e "user=admin\npassword=$(cat /secrets/admin-password)" > auth
+      containers:
+      - name: "elasticdump-load"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        volumeMounts:
+        - name: cacerts
+          mountPath: /cacerts
+          readOnly: true
+        - name: data
+          mountPath: /data
+          {{- with .Values.pv.subPath }}
+          subPath: {{ . }}
+          {{- end }}
+          readOnly: true
+        - name: work
+          mountPath: /work
+        workingDir: /data
+        env:
+        # https://github.com/elasticsearch-dump/elasticsearch-dump/issues/59#issuecomment-69057549
+        - name: NODE_TLS_REJECT_UNAUTHORIZED
+          value: '0'
+        - name: ELASTICSEARCH_URL
+          value: {{ (get .Values "elasticdump-load").url }}
+        - name: INDEX_NAME
+          value: {{ (get .Values "elasticdump-load").indexName }}
+        - name: ELASTICDUMP
+          value: >-
+            elasticdump --ca /cacerts/ca.crt --httpAuthFile /work/auth
+        command:
+        - bash
+        - -xue
+        args:
+        - -c
+        - |+
+           ${ELASTICDUMP} --input ${INDEX_NAME}_settings.json --output ${ELASTICSEARCH_URL}/${INDEX_NAME} --type "settings"
+           ${ELASTICDUMP} --input ${INDEX_NAME}_mappings.json --output ${ELASTICSEARCH_URL}/ --type "mapping"
+           ${ELASTICDUMP} --input ${INDEX_NAME}_data.json.gz --output ${ELASTICSEARCH_URL}/ --type "data" --fsCompress --noRefresh --limit=2500 --bulkAction=index
+           ${ELASTICDUMP} --input ${INDEX_NAME}_aliases.json --output ${ELASTICSEARCH_URL}/ --type "alias"
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
