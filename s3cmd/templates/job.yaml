@@ -97,6 +97,7 @@ spec:
         env: []
         command:
         - s3cmd
+        - --config=/.s3cfg
         - --verbose
         {{- with .Values.s3cmd }}
         {{- if .debug }}
