@@ -94,7 +94,10 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         securityContext:
           {{- toYaml .Values.securityContext | nindent 10 }}
-        env: []
+        env:
+        # needed for gnupg home ($HOME/.gnupg), otherwise it dependes on runAsUser
+        - name: HOME
+          value: /
         command:
         - s3cmd
         - --config=/.s3cfg
