@@ -22,6 +22,7 @@ spec:
     matchLabels:
       {{- include "rabbitmq.selectorLabels" . | nindent 6 }}
   serviceName: {{ $serviceName }}
+  podManagementPolicy: Parallel
   volumeClaimTemplates:
   - metadata:
       name: data
