@@ -11,6 +11,14 @@ spec:
   type: ClusterIP
   clusterIP: None
   ports:
+  - name: amqp
+    port: 5672
+    protocol: TCP
+    targetPort: 5672
+  - name: rabbitmq-management
+    port: 15672
+    protocol: TCP
+    targetPort: 15672
   - name: epmd
     port: 4369
     protocol: TCP
