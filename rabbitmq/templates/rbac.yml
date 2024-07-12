@@ -1,0 +1,32 @@
+# vim: set syntax=helm:
+
+{{- $fullname := (include "rabbitmq.fullname" .) }}
+
+# manifests
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ $fullname }} 
+rules:
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ $fullname }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "rabbitmq.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}
+

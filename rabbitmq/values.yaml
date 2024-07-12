@@ -1,0 +1,59 @@
+
+replicaCount: 3
+
+adminPassword:
+  secretName:
+
+erlangCookie:
+  secretName:
+ 
+image:
+  repository: rabbitmq 
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "3.13-management"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 999
+  runAsUser: 999
+  runAsGroup: 999
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  #readOnlyRootFilesystem: true
+  #runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 128Mi
+
+persistence:
+  data:
+    storageClassName: local-path
+    size: 1Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
