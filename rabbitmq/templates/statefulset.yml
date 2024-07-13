@@ -3,9 +3,9 @@
 # This is a modified version of this recipe: 
 #    https://blog.rabbitmq.com/posts/2020/08/deploying-rabbitmq-to-kubernetes-whats-involved/
 
-{{ $fullname := (include "rabbitmq.fullname" .) }}
-{{ $serviceName := (include "rabbitmq.serviceName" .) }}
-{{ $serviceDomain := printf "%s.%s.svc.cluster.local" $serviceName .Release.Namespace }}
+{{- $fullname := (include "rabbitmq.fullname" .) }}
+{{- $serviceName := (include "rabbitmq.serviceName" .) }}
+{{- $serviceDomain := (include "rabbitmq.serviceDomain" .) }}
 
 # manifests
 ---
@@ -65,6 +65,12 @@ spec:
           name: {{ printf "%s-config" $fullname }}
       - name: config-rw
         emptyDir: {}
+      {{- if .Values.tls.enabled }}
+      - name: certs
+        secret:
+          secretName: {{ include "rabbitmq.tls.secretName" . }}
+          defaultMode: 0640
+      {{- end }}{{/* if .Values.tls.enabled */}}
       initContainers:
       - name: prepare-config
         image: busybox:1.32
@@ -91,6 +97,10 @@ spec:
           mountPath: /etc/rabbitmq
         - name: data
           mountPath: /var/lib/rabbitmq/mnesia
+        {{- if .Values.tls.enabled }}
+        - name: certs
+          mountPath: /certs/rabbitmq
+        {{- end }}{{/* if .Values.tls.enabled */}}
         env:
         - name: _SERVICE_NAME
           value: {{ $serviceName | squote }}

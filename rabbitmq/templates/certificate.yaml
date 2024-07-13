@@ -1,0 +1,36 @@
+# vim: set filetype=helm:
+
+{{- $serviceDomain := (include "rabbitmq.serviceDomain" .) }}
+
+# manifests
+---
+{{- if and .Values.tls.enabled .Values.tls.issuerName }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "rabbitmq.fullname" . }}-server
+  labels: 
+    {{- include "rabbitmq.hookLabels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+spec:
+  secretName: {{ include "rabbitmq.tls.secretName" . }}
+  duration: {{ printf "%dh" (mul (.Values.tls.certificate.numDays | default 365) 24) }}
+  commonName: {{ $serviceDomain }}
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+  - server auth
+  dnsNames:
+  - {{ $serviceDomain }}
+  {{- with .Values.tls.certificate.externalDnsNames }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  issuerRef:
+    name: {{ .Values.tls.issuerName }}
+    kind: {{ .Values.tls.issuerKind | default "Issuer" }}
+{{- end }}{{/* if and .Values.tls.enabled .Values.tls.issuerName */}}

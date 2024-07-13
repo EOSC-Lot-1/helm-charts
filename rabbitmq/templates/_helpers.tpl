@@ -52,6 +52,11 @@ app.kubernetes.io/name: {{ include "rabbitmq.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "rabbitmq.hookLabels" -}}
+app.kubernetes.io/name: {{ include "rabbitmq.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}
@@ -63,10 +68,18 @@ Create the name of the service account to use
 {{- end }}
 {{- end }}
 
-
 {{/*
-Then name of the service that governs the statefulset
+The name of the service that governs the statefulset
 */}}
 {{- define "rabbitmq.serviceName" -}}
 {{ include "rabbitmq.fullname" . }}
 {{- end }}
+
+{{- define "rabbitmq.serviceDomain" -}}
+{{ printf "%s.%s.svc.cluster.local" (include "rabbitmq.serviceName" .) .Release.Namespace }}
+{{- end }}
+
+{{- define "rabbitmq.tls.secretName" -}}
+{{ .Values.tls.secretName | default (printf "%s-tls" (include "rabbitmq.fullname" .)) }}
+{{- end }}
+
