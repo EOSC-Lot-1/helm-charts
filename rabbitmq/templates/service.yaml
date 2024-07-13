@@ -15,16 +15,16 @@ spec:
     port: 5672
     protocol: TCP
     targetPort: 5672
-  - name: rabbitmq-management
+  - name: management
     port: 15672
     protocol: TCP
     targetPort: 15672
   {{- if .Values.tls.enabled }}
-  - name: amqp-tls
+  - name: amqps
     port: 5671
     protocol: TCP
     targetPort: 5671
-  - name: rabbitmq-management-tls
+  - name: management-https
     port: 15671
     protocol: TCP
     targetPort: 15671
@@ -57,16 +57,16 @@ spec:
     port: 5672
     protocol: TCP
     targetPort: 5672
-  - name: rabbitmq-management
+  - name: management
     port: 15672
     protocol: TCP
     targetPort: 15672
   {{- if .Values.tls.enabled }}
-  - name: amqp-tls
+  - name: amqps
     port: 5671
     protocol: TCP
     targetPort: 5671
-  - name: rabbitmq-management-tls
+  - name: management-https
     port: 15671
     protocol: TCP
     targetPort: 15671
