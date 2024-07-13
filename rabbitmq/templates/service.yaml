@@ -19,6 +19,16 @@ spec:
     port: 15672
     protocol: TCP
     targetPort: 15672
+  {{- if .Values.tls.enabled }}
+  - name: amqp-tls
+    port: 5671
+    protocol: TCP
+    targetPort: 5671
+  - name: rabbitmq-management-tls
+    port: 15671
+    protocol: TCP
+    targetPort: 15671
+  {{- end }}
   - name: epmd
     port: 4369
     protocol: TCP
@@ -41,7 +51,7 @@ metadata:
   labels:
     {{- include "rabbitmq.labels" . | nindent 4 }}
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type | default "ClusterIP" }}
   ports:
   - name: amqp
     port: 5672
@@ -51,6 +61,16 @@ spec:
     port: 15672
     protocol: TCP
     targetPort: 15672
+  {{- if .Values.tls.enabled }}
+  - name: amqp-tls
+    port: 5671
+    protocol: TCP
+    targetPort: 5671
+  - name: rabbitmq-management-tls
+    port: 15671
+    protocol: TCP
+    targetPort: 15671
+  {{- end }}
   selector:
     {{- include "rabbitmq.selectorLabels" . | nindent 4 }}
 

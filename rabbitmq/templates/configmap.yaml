@@ -5,12 +5,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "rabbitmq.fullname" . }}
+  name: {{ printf "%s-config" (include "rabbitmq.fullname" .) }}
   labels:
     {{- include "rabbitmq.labels" . | nindent 4 }}
 data:
   enabled_plugins: |
     [rabbitmq_peer_discovery_k8s, rabbitmq_management, rabbitmq_prometheus].
   rabbitmq.conf: |+
-    {{- .Files.Get "files/rabbitmq.conf" | nindent 4 }}
+    {{- .Files.Get (.Values.tls.enabled | ternary "files/rabbitmq-with-tls.conf" "files/rabbitmq.conf") | nindent 4 }}
 
