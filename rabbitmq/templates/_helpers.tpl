@@ -83,3 +83,10 @@ The name of the service that governs the statefulset
 {{ .Values.tls.secretName | default (printf "%s-tls" (include "rabbitmq.fullname" .)) }}
 {{- end }}
 
+{{- define "rabbitmq.adminPassword.secretName" -}}
+{{ .Values.adminPassword.secretName | default (printf "%s-admin-password" (include "rabbitmq.fullname" .)) }}
+{{- end }}
+
+{{- define "rabbitmq.erlangCookie.secretName" -}}
+{{ .Values.erlangCookie.secretName | default (printf "%s-erlang-cookie" (include "rabbitmq.fullname" .)) }}
+{{- end }}

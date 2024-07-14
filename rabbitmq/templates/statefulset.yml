@@ -111,12 +111,12 @@ spec:
         - name: RABBITMQ_DEFAULT_PASS
           valueFrom:
             secretKeyRef:
-              name: {{ .Values.adminPassword.secretName | default (printf "%s-admin-password" $fullname) }}
+              name: {{ include "rabbitmq.adminPassword.secretName" . }}
               key: password
         - name: RABBITMQ_ERLANG_COOKIE
           valueFrom:
             secretKeyRef:
-              name: {{ .Values.erlangCookie.secretName | default (printf "%s-erlang-cookie" $fullname) }}
+              name: {{ include "rabbitmq.erlangCookie.secretName" . }}
               key: cookie
         ports:
         - name: amqp
