@@ -1,0 +1,52 @@
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  #readOnlyRootFilesystem: true
+  #runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+curlImage: curlimages/curl:8.6.0
+
+rabbitmqImportDefinitions:
+    managementUrl: http://rabbitmq:15672
+    vhost: app1
+    curlrc:
+      secretName: rabbitmq-curlrc
+    cacert:
+      name: trust-ca-1
+    definitions:
+      name: rabbitmq-app1-defs
+  
