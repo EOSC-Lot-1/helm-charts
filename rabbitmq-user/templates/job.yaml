@@ -1,0 +1,92 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "rabbitmq-user.jobName" . }}
+  labels:
+    {{- include "rabbitmq-user.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rabbitmq-user.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rabbitmq-user.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: curlrc
+        secret:
+          secretName: {{ .Values.rabbitmqUser.curlrc.secretName }}
+      - name: cacert
+        configMap:
+          name: {{ .Values.rabbitmqUser.cacert.name }}
+      - name: password
+        secret:
+          secretName: {{ .Values.rabbitmqUser.password.secretName }}
+          defaultMode: 0640
+      containers:
+      - name: setup-user
+        image: {{ .Values.curlImage }}
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command:
+        - sh
+        - -xue
+        - -c
+        - |+
+          jq -c --rawfile password "${RABBITMQ_PASSWORD_FILE}" -n '{"password": $password, "tags": []}' |\
+              curl -s -i -XPUT ${RABBITMQ_MANAGEMENT_URL}/api/users/${RABBITMQ_USERNAME} -H content-type:application/json -d @-
+          curl -s -i -XPUT ${RABBITMQ_MANAGEMENT_URL}/api/permissions/%2F${RABBITMQ_VHOST}/${RABBITMQ_USERNAME} -H content-type:application/json -d "${RABBITMQ_USER_PERMISSIONS}"
+        env:
+        - name: RABBITMQ_MANAGEMENT_URL
+          value: {{ .Values.rabbitmqUser.managementUrl }}
+        - name: RABBITMQ_VHOST
+          value: {{ .Values.rabbitmqUser.vhost }}
+        - name: CURL_CA_BUNDLE
+          value: /ca.crt
+        - name: RABBITMQ_USERNAME
+          value: {{ .Values.rabbitmqUser.username }}
+        - name: RABBITMQ_PASSWORD_FILE
+          value: /rabbimq-password
+        - name: RABBITMQ_USER_PERMISSIONS
+          value: {{ .Values.rabbitmqUser.permissions | toJson | squote }}
+        volumeMounts:
+        - name: curlrc
+          mountPath: /.curlrc
+          subPath: curlrc
+          readOnly: true
+        - name: cacert
+          mountPath: /ca.crt
+          subPath: ca.crt
+          readOnly: true
+        - name: password
+          mountPath: /rabbimq-password
+          subPath: {{ .Values.rabbitmqUser.password.key }}
+          readOnly: true
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
