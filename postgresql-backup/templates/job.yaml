@@ -58,16 +58,26 @@ spec:
           value: {{ .Values.backup.database.name }}
         - name: PGUSER
           value: {{ .Values.backup.database.user }}
-        - name: PGHOST
-          valueFrom:
-            configMapKeyRef:
-              name: {{ .Values.backup.database.host.configName }}
-              key: {{ .Values.backup.database.host.key }}
+        {{- if eq "string" (kindOf .Values.backup.database.port) }}
+        - name: PGPORT
+          value: {{ .Values.backup.database.port }}
+        {{- else }}
         - name: PGPORT
           valueFrom:
             configMapKeyRef:
               name: {{ .Values.backup.database.port.configName }}
               key: {{ .Values.backup.database.port.key }}
+        {{- end }}
+        {{- if eq "string" (kindOf .Values.backup.database.host) }}
+        - name: PGHOST
+          value: {{ .Values.backup.database.host }}
+        {{- else }}
+        - name: PGHOST
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.backup.database.host.configName }}
+              key: {{ .Values.backup.database.host.key }}
+        {{- end }}
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
