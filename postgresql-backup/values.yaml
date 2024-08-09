@@ -21,7 +21,7 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
-securityContext: 
+securityContext:
   capabilities:
     drop:
     - ALL
@@ -29,7 +29,7 @@ securityContext:
   runAsNonRoot: true
   allowPrivilegeEscalation: false
 
-resources: 
+resources:
   limits:
     cpu: 200m
     memory: 128Mi
@@ -58,16 +58,16 @@ backup:
     name: example
     #host: postgresql
     host:
-      configName: "configname"
-      key: "host"
-    #port: 5433
+      configName: configname
+      key: host
+    #port: "5433"
     port:
-      configName: "configname"
-      key: "port"
+      configName: configname
+      key: port
     user: someone
     password:
       secretName: someone-password
-      key: password
+      key: someone-password
 
 # s3cmd only needed if an s3 bucket is also specified
 # s3cmd:

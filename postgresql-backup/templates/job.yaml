@@ -34,7 +34,8 @@ spec:
       volumes:
       - name: output
         persistentVolumeClaim:
-          claimName: {{ .Values.backup.outputFile.pvcName }}{{- /*
+          claimName: {{ .Values.backup.outputFile.pvcName }}
+      {{- /*
       - name: temp
         emptyDir: {}
       {{- if .Values.backup.s3.bucket }}
@@ -57,26 +58,16 @@ spec:
           value: {{ .Values.backup.database.name }}
         - name: PGUSER
           value: {{ .Values.backup.database.user }}
-        {{- if eq "int" (kindOf .Values.backup.database.port) }}
-        - name: PGPORT
-          value: {{ .Values.backup.database.port }}
-        {{- else }}
-        - name: PGPORT
-          valueFrom:
-            configMapKeyRef:
-              name: {{ .Values.backup.database.port.configName }}
-              key: {{ .Values.backup.database.port.key }}
-        {{- end }}
-        {{- if eq "string" (kindOf .Values.backup.database.host) }}
-        - name: PGHOST
-          value: {{ .Values.backup.database.host }}
-        {{- else }}
         - name: PGHOST
           valueFrom:
             configMapKeyRef:
               name: {{ .Values.backup.database.host.configName }}
               key: {{ .Values.backup.database.host.key }}
-        {{- end }}
+        - name: PGPORT
+          valueFrom:
+            configMapKeyRef:
+              name: {{ .Values.backup.database.port.configName }}
+              key: {{ .Values.backup.database.port.key }}
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
@@ -90,7 +81,7 @@ spec:
         - -xue
         - -c
         - |-
-          pg_dump -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE-F c -b -v -f /backup_$(date +%Y%m%d%H%M%S).sql | gzip -c > "${OUTPUT_NAME}"
+          pg_dump -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -F c -b -v | gzip -c > "${OUTPUT_NAME}"
         workingDir: /work
         {{- with .Values.backup.outputFile }}
         - name: output
