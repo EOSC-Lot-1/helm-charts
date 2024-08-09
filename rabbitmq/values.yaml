@@ -10,6 +10,10 @@ erlangCookie:
 service:
   type: ClusterIP
 
+# a configuration fragment to be added under conf.d
+#configExtra: |
+#  consumer_timeout = 3600000
+  
 tls:
   enabled: false
   secretName:

@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: "15.7"
+description: Backup a Postgresql database
+name: postgresql-backup
+type: application
+version: 0.1.0

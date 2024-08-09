@@ -9,8 +9,19 @@ metadata:
   labels:
     {{- include "rabbitmq.labels" . | nindent 4 }}
 data:
+  # https://www.rabbitmq.com/docs/plugins#enabled-plugins-file
   enabled_plugins: |
-    [rabbitmq_peer_discovery_k8s, rabbitmq_management, rabbitmq_prometheus].
-  rabbitmq.conf: |+
-    {{- .Files.Get (.Values.tls.enabled | ternary "files/rabbitmq-with-tls.conf" "files/rabbitmq.conf") | nindent 4 }}
-
+    [rabbitmq_peer_discovery_k8s, rabbitmq_management, rabbitmq_prometheus, rabbitmq_shovel, rabbitmq_shovel_management].
+  # https://www.rabbitmq.com/docs/configure#config-confd-directory
+  10-logging.conf: |-
+    {{- .Files.Get "files/conf.d/logging.conf" | nindent 4 }}
+  20-clustering.conf: |-
+    {{- .Files.Get "files/conf.d/clustering.conf" | nindent 4 }}
+  {{- if .Values.tls.enabled }}
+  50-tls.conf: |-
+    {{- .Files.Get "files/conf.d/tls.conf" | nindent 4 }}
+  {{- end }}{{/* .Values.tls.enabled */}}
+  {{- if not (empty .Values.configExtra) }}
+  99-extra.conf: |-
+    {{- .Values.configExtra | nindent 4 }}
+  {{- end }}{{/* if .Values.configExtra */}}
