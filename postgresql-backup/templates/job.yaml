@@ -83,6 +83,7 @@ spec:
         - |-
           pg_dump -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE -F c -b -v | gzip -c > "${OUTPUT_NAME}"
         workingDir: /work
+        volumeMounts:
         {{- with .Values.backup.outputFile }}
         - name: output
           mountPath: /work
