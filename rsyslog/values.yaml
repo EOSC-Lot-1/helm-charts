@@ -1,0 +1,66 @@
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+rsyslog:
+  image:
+    repository: ghcr.io/eosc-lot-1/rsyslog
+    pullPolicy: IfNotPresent
+    tag: "8-alpine"
+  config:
+    #configMapName: rsyslog-1-config
+    #key: rsyslog.conf
+
+logrotate:
+  image:
+    repository: ghcr.io/eosc-lot-1/logrotate
+    pullPolicy: IfNotPresent
+    tag: "3-alpine"
+
+persistence:
+  logs:
+    storageClassName: local-path
+    size: 4Gi
+
+timezone: 'Europe/Athens'
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  fsGroupChangePolicy: OnRootMismatch
+  runAsUser: 1000
+  runAsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  #readOnlyRootFilesystem: true
+  #runAsUser: 1000
+
+service:
+  port: 514
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 384Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
