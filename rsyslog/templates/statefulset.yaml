@@ -1,0 +1,102 @@
+{{/* vim: set syntax=helm: */}}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "rsyslog.fullname" . }}
+  labels:
+    {{- include "rsyslog.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "rsyslog.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "rsyslog.fullname" . }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    {{- with .Values.persistence.logs }}
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: {{ .storageClassName }}
+      resources:
+        requests:
+          storage: {{ .size }}
+    {{- end }}{{/* with .Values.persistence.logs */}} 
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rsyslog.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: 10
+      # share PID namespace, because we want to signal (HUP) rsyslog process
+      shareProcessNamespace: true
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rsyslog.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      {{- with .Values.rsyslog.config }}
+      - name: config
+        configMap:
+          name: {{ .configMapName }}
+      {{- end }}{{/* with .Values.rsyslog.config */}}
+      containers:
+      - name: rsyslog
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        {{- with .Values.rsyslog.image }}
+        imagePullPolicy: {{ .pullPolicy }} 
+        image: "{{ .repository }}:{{ .tag }}"
+        {{- end }}{{/* with .Values.rsyslog.image */}}
+        env:
+        - name: TZ
+          value: {{ .Values.timezone }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/log
+        {{- with .Values.rsyslog.config }}
+        - name: config
+          mountPath: /etc/rsyslog.conf
+          subPath: {{ .key | default "rsyslog.conf" }}
+          readOnly: true
+        {{- end }}{{/* with .Values.rsyslog.config */}}
+        ports:
+        - containerPort: 514
+          protocol: TCP
+      - name: logrotate
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        {{- with .Values.logrotate.image }}
+        imagePullPolicy: {{ .pullPolicy }} 
+        image: "{{ .repository }}:{{ .tag }}"
+        {{- end }}{{/* with .Values.logrotate.image */}}
+        env:
+        - name: TZ
+          value: {{ .Values.timezone }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/log
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
