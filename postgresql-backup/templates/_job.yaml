@@ -1,7 +1,7 @@
 {{/* vim: set syntax=helm: */}}
 
-{{/* 
-Define the pod spec 
+{{/*
+Define the pod spec
 */}}
 {{- define "postgresql-backup.podSpec" -}}
 
@@ -27,6 +27,7 @@ volumes:
 - name: gnupg-home
   emptyDir: {}
 {{- end }}
+
 initContainers:
 - name: backup
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -40,41 +41,48 @@ initContainers:
         fieldPath: metadata.uid
   - name: OUTPUT_NAME
     value: $(_POD_ID).sql.gz
+  {{- with .Values.backup.database }}
   - name: PGDATABASE
-    value: {{ .Values.backup.database.name }}
+    value: {{ eq "ALL" .name | ternary "postgres" .name }}
   - name: PGUSER
-    value: {{ .Values.backup.database.user }}
-  {{- if eq "string" (kindOf .Values.backup.database.port) }}
+    value: {{ .user | default "postgres" }}
+  {{- if eq "string" (kindOf .port) }}
   - name: PGPORT
-    value: {{ .Values.backup.database.port | squote }}
+    value: {{ .port | squote }}
   {{- else }}
   - name: PGPORT
     valueFrom:
       configMapKeyRef:
-        name: {{ .Values.backup.database.port.configName }}
-        key: {{ .Values.backup.database.port.key }}
-  {{- end }}{{/* if eq "string" (kindOf .Values.backup.database.port) */}}
-  {{- if eq "string" (kindOf .Values.backup.database.host) }}
+        name: {{ .port.configName }}
+        key: {{ .port.key }}
+  {{- end }}{{/* if eq "string" (kindOf .port) */}}
+  {{- if eq "string" (kindOf .host) }}
   - name: PGHOST
-    value: {{ .Values.backup.database.host }}
+    value: {{ .host }}
   {{- else }}
   - name: PGHOST
     valueFrom:
       configMapKeyRef:
-        name: {{ .Values.backup.database.host.configName }}
-        key: {{ .Values.backup.database.host.key }}
-  {{- end }}{{/* if eq "string" (kindOf .Values.backup.database.host) */}}
+        name: {{ .host.configName }}
+        key: {{ .host.key }}
+  {{- end }}{{/* if eq "string" (kindOf .host) */}}
   - name: PGPASSWORD
     valueFrom:
       secretKeyRef:
-        name: {{ .Values.backup.database.password.secretName }}
-        key: {{ .Values.backup.database.password.key | default "password" }}
+        name: {{ .password.secretName }}
+        key: {{ .password.key | default "password" }}
   command:
   - sh
   - -xue
   - -c
-  - |-
+  {{- if eq "ALL" .name }}
+  - >-
+    pg_dumpall -v | gzip -c -9 > ${OUTPUT_NAME}
+  {{- else }}
+  - >-
     pg_dump -v -Fp --compress=9 --file ${OUTPUT_NAME}
+  {{- end }}{{/* if eq "ALL" .name */}}
+  {{- end }}{{/* with .Values.backup.database */}}
   workingDir: /work
   volumeMounts:
   {{- with .Values.backup.outputFile }}
@@ -98,8 +106,10 @@ initContainers:
         fieldPath: metadata.uid
   - name: OUTPUT_NAME
     value: $(_POD_ID).sql.gz
-  - name: DEST_URL
-    value: {{ printf "s3://%s/%s" (.Values.backup.s3.bucket) (.Values.backup.s3.prefix | default "") }}/$(OUTPUT_NAME)
+  - name: BASE_URL
+    value: {{ printf "s3://%s/%s" (.Values.backup.s3.bucket) (.Values.backup.s3.prefix | default "") }}
+  - name: OUTPUT_URL
+    value: $(BASE_URL)/$(OUTPUT_NAME)
   command:
   - s3cmd
   {{- if .Values.s3cmd.debug }}
@@ -113,7 +123,7 @@ initContainers:
   - --no-preserve
   - put
   - $(OUTPUT_NAME)
-  - $(DEST_URL)
+  - $(OUTPUT_URL)
   workingDir: /work
   volumeMounts:
   - name: s3cmd-config
@@ -131,8 +141,9 @@ initContainers:
     subPath: {{ . }}
     {{- end }} {{/* with .subPath */}}
   {{- end }}{{/* with .Values.backup.outputFile */}}
-  resources: {{- toYaml .Values.resources | nindent 4 }} 
+  resources: {{- toYaml .Values.resources | nindent 4 }}
 {{- end }}{{/* if .Values.backup.s3.bucket */}}
+
 containers:
 - name: stat
   image: busybox:1.36
@@ -171,11 +182,11 @@ tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 
-{{- end }}{{/* define */}}
+{{- end }}{{/* define "postgresql-backup.podSpec" */}}
 
 
-{{/* 
-Define the pod spec 
+{{/*
+Define the pod spec
 */}}
 {{- define "postgresql-backup.jobSpec" -}}
 
@@ -193,4 +204,4 @@ template:
   spec:
     {{- include "postgresql-backup.podSpec" . | nindent 4 }}
 
-{{- end }}{{/* define */}}
+{{- end }}{{/* define "postgresql-backup.jobSpec" */}}
