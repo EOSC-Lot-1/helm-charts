@@ -1,7 +1,7 @@
 image:
   repository: postgres
   pullPolicy: IfNotPresent
-  tag: "15.7"
+  tag: "15.7-alpine3.20"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -15,9 +15,9 @@ serviceAccount:
 podAnnotations: {}
 
 podSecurityContext:
-  runAsUser: 999
-  runAsGroup: 999
-  fsGroup: 999
+  runAsUser: 70
+  runAsGroup: 70
+  fsGroup: 70
   seccompProfile:
     type: RuntimeDefault
 
@@ -41,6 +41,12 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+cronjob:
+  # if not enabled, fire an one-off job
+  enabled: true
+  suspend: true
+  schedule: '30 01 * * ?'
+
 backup:
   # target of the backup (in a PV)
   outputFile:
@@ -48,34 +54,36 @@ backup:
     subPath: ~
     #fileName: backup.sql.gz
   # (optional) upload the backup file to an S3 bucket
-  # s3:
-  #   bucket: ~
-  #   #bucket: backups
-  #   #prefix: postgresql
-  #   # for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
-  #   encrypt: false
+  s3:
+    bucket: ~
+    #bucket: backups
+    #prefix: postgresql
+    ## for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
+    #encrypt: false
   database:
     name: example
-    #host: postgresql
-    host:
-      configName: configname
-      key: host
-    #port: "5433"
-    port:
-      configName: configname
-      key: port
-    user: someone
+    host: postgresql
+    # .. or
+    #host:
+    #  configName: base-env
+    #  key: POSTGRES_HOST
+    port: "5432"
+    # .. or
+    #port:
+    #  configName: base-env
+    #  key: POSTGRES_PORT
+    user: postgres
     password:
-      secretName: someone-password
-      key: someone-password
+      secretName: postgres-password
+      key: password
 
-# s3cmd only needed if an s3 bucket is also specified
-# s3cmd:
-#   image:
-#     repository: ghcr.io/eosc-lot-1/s3cmd
-#     pullPolicy: IfNotPresent
-#     tag: 2-alpine
-#   config:
-#     secretName: s3cmd-config
-#   debug: false
+## s3cmd only needed if an s3 bucket is also specified
+s3cmd:
+  image:
+    repository: ghcr.io/eosc-lot-1/s3cmd
+    pullPolicy: IfNotPresent
+    tag: 2-alpine
+  config:
+    secretName: s3cmd-config
+  debug: false
 
