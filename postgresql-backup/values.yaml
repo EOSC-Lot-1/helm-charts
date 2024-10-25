@@ -41,6 +41,12 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+cronjob:
+  # if not enabled, fire an one-off job
+  enabled: true
+  suspend: true
+  schedule: '30 01 * * ?'
+
 backup:
   # target of the backup (in a PV)
   outputFile:
