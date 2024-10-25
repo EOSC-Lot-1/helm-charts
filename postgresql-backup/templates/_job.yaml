@@ -74,6 +74,8 @@ initContainers:
   command:
   - sh
   - -xue
+  - -o
+  - pipefail
   - -c
   {{- if eq "ALL" .name }}
   - >-
