@@ -46,21 +46,19 @@ initContainers:
     value: {{ eq "ALL" .name | ternary "postgres" .name }}
   - name: PGUSER
     value: {{ .user | default "postgres" }}
-  {{- if eq "string" (kindOf .port) }}
   - name: PGPORT
+  {{- if eq "string" (kindOf .port) }}
     value: {{ .port | squote }}
   {{- else }}
-  - name: PGPORT
     valueFrom:
       configMapKeyRef:
         name: {{ .port.configName }}
         key: {{ .port.key }}
   {{- end }}{{/* if eq "string" (kindOf .port) */}}
-  {{- if eq "string" (kindOf .host) }}
   - name: PGHOST
+  {{- if eq "string" (kindOf .host) }}
     value: {{ .host }}
   {{- else }}
-  - name: PGHOST
     valueFrom:
       configMapKeyRef:
         name: {{ .host.configName }}
