@@ -3,20 +3,22 @@
 {{/*
 Define the pod spec
 */}}
-{{- define "postgresql-backup.podSpec" -}}
+{{- define "mariadb-backup.podSpec" -}}
 
 restartPolicy: Never
 {{- with .Values.imagePullSecrets }}
 imagePullSecrets:
   {{- toYaml . | nindent 8 }}
 {{- end }}
-serviceAccountName: {{ include "postgresql-backup.serviceAccountName" . }}
+serviceAccountName: {{ include "mariadb-backup.serviceAccountName" . }}
 securityContext:
   {{- toYaml .Values.podSecurityContext | nindent 2 }}
 volumes:
 - name: output
   persistentVolumeClaim:
     claimName: {{ .Values.backup.outputFile.pvcName }}
+- name: mariadb-home
+  emptyDir: {}  
 - name: temp
   emptyDir: {}
 {{- if .Values.backup.s3.bucket }}
@@ -29,6 +31,51 @@ volumes:
 {{- end }}
 
 initContainers:
+
+- name: prepare-config
+  image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  securityContext:
+    {{- toYaml .Values.securityContext | nindent 4 }}
+  env:
+  {{- with .Values.backup.database }}
+  - name: DB_HOST
+    {{- if eq "string" (kindOf .host) }}
+    value: {{ .host }}
+    {{- else }}
+    valueFrom:
+      configMapKeyRef:
+        name: {{ .host.configName }}
+        key: {{ .host.key }}
+    {{- end }}{{/* if eq "string" (kindOf .host) */}}
+  - name: DB_PORT
+    {{- if eq "string" (kindOf .port) }}
+    value: {{ .port | quote }}
+    {{- else }}
+    valueFrom:
+      configMapKeyRef:
+        name: {{ .port.configName }}
+        key: {{ .port.key }}
+    {{- end }}{{/* if eq "string" (kindOf .port) */}}
+  - name: DB_USER
+    value: {{ .user }}
+  - name: DB_PASS
+    valueFrom:
+      secretKeyRef:
+        name: {{ .password.secretName }}
+        key: {{ .password.key }}
+  {{- end }}{{/* with .Values.backup.database */}}
+  command:
+  - bash
+  - -ue
+  - -c
+  - |-
+    touch ~/.my.cnf && chmod -v u=rw,g=,o= ~/.my.cnf
+    echo -e "[client]\nhost=${DB_HOST}\nport=${DB_PORT}\nuser=${DB_USER}\npassword=${DB_PASS}" > ~/.my.cnf
+  volumeMounts:
+  - name: mariadb-home
+    mountPath: /var/lib/mysql
+
 - name: backup
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
   imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -41,50 +88,20 @@ initContainers:
         fieldPath: metadata.uid
   - name: OUTPUT_NAME
     value: $(_POD_ID).sql.gz
-  {{- with .Values.backup.database }}
-  - name: PGDATABASE
-    value: {{ eq "ALL" .name | ternary "postgres" .name }}
-  - name: PGUSER
-    value: {{ .user | default "postgres" }}
-  - name: PGPORT
-  {{- if eq "string" (kindOf .port) }}
-    value: {{ .port | squote }}
-  {{- else }}
-    valueFrom:
-      configMapKeyRef:
-        name: {{ .port.configName }}
-        key: {{ .port.key }}
-  {{- end }}{{/* if eq "string" (kindOf .port) */}}
-  - name: PGHOST
-  {{- if eq "string" (kindOf .host) }}
-    value: {{ .host }}
-  {{- else }}
-    valueFrom:
-      configMapKeyRef:
-        name: {{ .host.configName }}
-        key: {{ .host.key }}
-  {{- end }}{{/* if eq "string" (kindOf .host) */}}
-  - name: PGPASSWORD
-    valueFrom:
-      secretKeyRef:
-        name: {{ .password.secretName }}
-        key: {{ .password.key | default "password" }}
+  - name: DB_NAME
+    value: {{ .Values.backup.database.name }}
   command:
-  - sh
+  - bash
   - -xue
   - -o
   - pipefail
   - -c
-  {{- if eq "ALL" .name }}
-  - >-
-    pg_dumpall -v | gzip -c -9 > ${OUTPUT_NAME}
-  {{- else }}
-  - >-
-    pg_dump -v -Fp --compress=9 --file ${OUTPUT_NAME}
-  {{- end }}{{/* if eq "ALL" .name */}}
-  {{- end }}{{/* with .Values.backup.database */}}
+  - |-
+    mariadb-dump --lock-tables -v ${DB_NAME} | gzip -c > ${OUTPUT_NAME}
   workingDir: /work
   volumeMounts:
+  - name: mariadb-home
+    mountPath: /var/lib/mysql
   {{- with .Values.backup.outputFile }}
   - name: output
     mountPath: /work
@@ -92,7 +109,8 @@ initContainers:
     subPath: {{ . }}
     {{- end }}{{/* with .subPath */}}
   {{- end }}{{/* with .Values.backup.outputFile */}}
-  resources: {{- toYaml .Values.resources | nindent 4 }}
+  resources: {{- toYaml .Values.resources | nindent 10 }} 
+
 {{- if .Values.backup.s3.bucket }}
 - name: s3cmd
   image: "{{ .Values.s3cmd.image.repository }}:{{ .Values.s3cmd.image.tag }}"
@@ -182,13 +200,13 @@ tolerations:
   {{- toYaml . | nindent 2 }}
 {{- end }}
 
-{{- end }}{{/* define "postgresql-backup.podSpec" */}}
+{{- end }}{{/* define "mariadb-backup.podSpec" */}}
 
 
 {{/*
 Define the pod spec
 */}}
-{{- define "postgresql-backup.jobSpec" -}}
+{{- define "mariadb-backup.jobSpec" -}}
 
 backoffLimit: 1
 completions: 1
@@ -200,8 +218,8 @@ template:
       {{- toYaml . | nindent 6 }}
     {{- end }}
     labels:
-      {{- include "postgresql-backup.selectorLabels" . | nindent 6 }}
+      {{- include "mariadb-backup.selectorLabels" . | nindent 6 }}
   spec:
-    {{- include "postgresql-backup.podSpec" . | nindent 4 }}
+    {{- include "mariadb-backup.podSpec" . | nindent 4 }}
 
-{{- end }}{{/* define "postgresql-backup.jobSpec" */}}
+{{- end }}{{/* define "mariadb-backup.jobSpec" */}}

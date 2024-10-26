@@ -21,7 +21,7 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
-securityContext: 
+securityContext:
   capabilities:
     drop:
     - ALL
@@ -29,7 +29,7 @@ securityContext:
   runAsNonRoot: true
   allowPrivilegeEscalation: false
 
-resources: 
+resources:
   limits:
     cpu: 200m
     memory: 128Mi
@@ -40,6 +40,12 @@ resources:
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+cronjob:
+  # if not enabled, fire an one-off job
+  enabled: true
+  suspend: true
+  schedule: '30 01 * * ?'
 
 backup:
   # target of the backup (in a PV)
@@ -52,18 +58,26 @@ backup:
     bucket: ~
     #bucket: backups
     #prefix: mariadb
-    # for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
-    encrypt: false
+    ## for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
+    #encrypt: false
   database:
     name: example
     host: mariadb
-    port: 3306
-    user: someone
+    # .. or
+    #host:
+    #  configName: base-env
+    #  key: MARIADB_HOST
+    port: "3306"
+    # .. or
+    #port:
+    #  configName: base-env
+    #  key: MARIADB_PORT
+    user: postgres
     password:
-      secretName: someone-password
+      secretName: mariadb-password
       key: password
 
-# s3cmd only needed if an s3 bucket is also specified
+## s3cmd only needed if an s3 bucket is also specified
 s3cmd:
   image:
     repository: ghcr.io/eosc-lot-1/s3cmd
