@@ -3,7 +3,7 @@ entries:
   download-from-github-repo:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-12T18:16:10.896032438+03:00"
+    created: "2025-01-29T03:42:02.945698419+02:00"
     description: Download a file from a github repo
     digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
     name: download-from-github-repo
@@ -14,7 +14,7 @@ entries:
   flyway:
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-04-12T18:16:10.896717531+03:00"
+    created: "2025-01-29T03:42:02.946474664+02:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: e5f6942146673458d7a74bd254514fa14221a3b8ce878d582422720285a6504c
     name: flyway
@@ -24,7 +24,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2024-04-12T18:16:10.896351881+03:00"
+    created: "2025-01-29T03:42:02.946073916+02:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
     name: flyway
@@ -32,10 +32,21 @@ entries:
     urls:
     - flyway-0.1.0.tgz
     version: 0.1.0
+  postgresql-backup:
+  - apiVersion: v2
+    appVersion: "15.7"
+    created: "2025-01-29T03:42:02.946912485+02:00"
+    description: Backup a Postgresql database
+    digest: 851ff101f52aac56504974e1c36ae22bf6fdc8947a9e66b2145c7d44d1af6d0d
+    name: postgresql-backup
+    type: application
+    urls:
+    - postgresql-backup-0.4.2.tgz
+    version: 0.4.2
   postgresql-cluster:
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-12T18:16:10.898866364+03:00"
+    created: "2025-01-29T03:42:02.949307192+02:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 49737e243bf5b60e8ceca5440c066a2b2b6544fab00cad6ed50e30114db4b2e9
     name: postgresql-cluster
@@ -45,7 +56,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: "15"
-    created: "2024-04-12T18:16:10.897850854+03:00"
+    created: "2025-01-29T03:42:02.948139126+02:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
     name: postgresql-cluster
@@ -53,10 +64,21 @@ entries:
     urls:
     - postgresql-cluster-0.4.0.tgz
     version: 0.4.0
+  postgresql-verify-backup:
+  - apiVersion: v2
+    appVersion: 0.1.0
+    created: "2025-01-29T03:42:02.949667115+02:00"
+    description: A Helm chart for verifying a PostgreSQL backup from an S3 bucket
+    digest: 344b04845d94098db53c681c0bb07b652a444fb6f257a3db487d7d352a21f047
+    name: postgresql-verify-backup
+    type: application
+    urls:
+    - postgresql-verify-backup-0.1.0.tgz
+    version: 0.1.0
   run-script-in-mariadb:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2024-04-12T18:16:10.899156964+03:00"
+    created: "2025-01-29T03:42:02.950005335+02:00"
     description: Run an SQL script on a MariaDB database
     digest: 8cef134bda30d7325c7e5564acbe9029ec67dbd22e50a4fe7defd75bdb7f5d9e
     name: run-script-in-mariadb
@@ -64,4 +86,4 @@ entries:
     urls:
     - run-script-in-mariadb-0.1.0.tgz
     version: 0.1.0
-generated: "2024-04-12T18:16:10.895579361+03:00"
+generated: "2025-01-29T03:42:02.945182973+02:00"
