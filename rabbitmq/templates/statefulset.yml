@@ -1,0 +1,169 @@
+# vim: set syntax=helm:
+
+# This is a modified version of this recipe: 
+#    https://blog.rabbitmq.com/posts/2020/08/deploying-rabbitmq-to-kubernetes-whats-involved/
+
+{{- $fullname := (include "rabbitmq.fullname" .) }}
+{{- $serviceName := (include "rabbitmq.serviceName" .) }}
+{{- $serviceDomain := (include "rabbitmq.serviceDomain" .) }}
+
+# manifests
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}
+  labels:
+    {{- include "rabbitmq.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "rabbitmq.selectorLabels" . | nindent 6 }}
+  serviceName: {{ $serviceName }}
+  podManagementPolicy: Parallel
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      {{- with .Values.persistence.data }}
+      storageClassName: {{ .storageClassName }}
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .size }} 
+       {{- end }}{{/* with .Values.persistence.data */}}
+  template: 
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rabbitmq.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccount: {{ $fullname }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rabbitmq.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      dnsConfig:
+        # needed because discovery tries to reach peers using simple (non-FQDN) hostnames
+        searches:
+        - {{ $serviceDomain }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ printf "%s-config" $fullname }}
+      - name: config-rw
+        emptyDir: {}
+      {{- if .Values.tls.enabled }}
+      - name: certs
+        secret:
+          secretName: {{ include "rabbitmq.tls.secretName" . }}
+          defaultMode: 0640
+      {{- end }}{{/* if .Values.tls.enabled */}}
+      initContainers:
+      - name: prepare-config
+        image: busybox:1.32
+        volumeMounts:
+        - name: config
+          mountPath: /tmp/rabbitmq
+        - name: config-rw
+          mountPath: /etc/rabbitmq
+        command:
+        - sh
+        - -c
+        - |-
+            mkdir -v /etc/rabbitmq/conf.d/;
+            cp -v /tmp/rabbitmq/*.conf /etc/rabbitmq/conf.d/;
+            cp -v /tmp/rabbitmq/enabled_plugins /etc/rabbitmq/;
+      containers:
+      - name: rabbitmq
+        securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        volumeMounts:
+        - name: config-rw
+          mountPath: /etc/rabbitmq
+        - name: data
+          mountPath: /var/lib/rabbitmq/mnesia
+        {{- if .Values.tls.enabled }}
+        - name: certs
+          mountPath: /certs/rabbitmq
+        {{- end }}{{/* if .Values.tls.enabled */}}
+        env:
+        - name: _SERVICE_NAME
+          value: {{ $serviceName | squote }}
+        - name: RABBITMQ_USE_LONGNAME
+          value: 'false'
+        - name: RABBITMQ_DEFAULT_USER
+          value: admin
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "rabbitmq.adminPassword.secretName" . }}
+              key: password
+        - name: RABBITMQ_ERLANG_COOKIE
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "rabbitmq.erlangCookie.secretName" . }}
+              key: cookie
+        ports:
+        - name: amqp
+          containerPort: 5672
+          protocol: TCP
+        - name: management
+          containerPort: 15672
+          protocol: TCP
+        - name: prometheus
+          containerPort: 15692
+          protocol: TCP
+        - name: epmd
+          containerPort: 4369
+          protocol: TCP
+        {{- if .Values.tls.enabled }}
+        - name: amqps
+          containerPort: 5671 
+          protocol: TCP
+        - name: management-tls
+          containerPort: 15671
+          protocol: TCP
+        {{- end }}{{/* if .Values.tls.enabled */}}
+        # See also https://www.rabbitmq.com/monitoring.html#health-checks.
+        # See https://www.rabbitmq.com/monitoring.html for monitoring frequency recommendations.
+        livenessProbe:
+          exec:
+            command: ["rabbitmq-diagnostics", "status"]
+          initialDelaySeconds: 40
+          periodSeconds: 60
+          timeoutSeconds: 15
+        readinessProbe: # probe to know when ready to accept traffic
+          exec:
+            command: ["rabbitmq-diagnostics", "ping"]
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          timeoutSeconds: 10
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

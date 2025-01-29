@@ -1,0 +1,70 @@
+image:
+  repository: ghcr.io/eosc-lot-1/s3cmd
+  pullPolicy: IfNotPresent
+  tag: "2-alpine"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext: 
+  capabilities:
+    drop:
+    - ALL
+  #readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  #runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+pv:
+  pvcName: data
+  #subPath: xyz/123
+
+s3cmd:
+  debug: false
+  config:
+    secretName: s3cmd-config
+  recursive: false
+  # command is one of: get, put
+  command: get
+  # NOTE: If source URL ends with "/", we assume that source is a directory.
+  # Then, unless using `put` with archive flag, recursive behavior is enabled.
+  get:
+    # S3 object as s3://BUCKET/PREFIX/[NAME]
+    from: s3://test-1/path/to/1.txt
+    # file under subPath of PV
+    to: 1.txt
+  put:
+    archive: false
+    encrypt: false
+    # file under subPath of PV; can be a directory or '.', if `archive` setting is enabled
+    from: 1.txt
+    # S3 object as s3://BUCKET/PREFIX/[NAME]
+    to: s3://test-1/path/to/1.txt
+

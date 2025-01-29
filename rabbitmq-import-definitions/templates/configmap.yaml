@@ -1,0 +1,12 @@
+# vim: set syntax=helm:
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-scripts" (include "rabbitmq-import-definitions.fullname" .) }}
+  labels:
+    {{- include "rabbitmq-import-definitions.labels" . | nindent 4 }}
+data:
+{{ (.Files.Glob "scripts/*").AsConfig | indent 2 }}
+

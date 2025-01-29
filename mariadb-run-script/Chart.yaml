@@ -1,6 +1,6 @@
 apiVersion: v2
-appVersion: 0.1.0
+appVersion: "10.11"
 description: Run an SQL script on a MariaDB database
-name: run-script-in-mariadb
+name: mariadb-run-script
 type: application
-version: 0.1.0
+version: 0.3.0

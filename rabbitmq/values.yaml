@@ -1,0 +1,79 @@
+
+replicaCount: 3
+
+adminPassword:
+  secretName:
+
+erlangCookie:
+  secretName:
+ 
+service:
+  type: ClusterIP
+
+# a configuration fragment to be added under conf.d
+#configExtra: |
+#  consumer_timeout = 3600000
+  
+tls:
+  enabled: false
+  secretName:
+  # if not empty, request the TLS certificate from the given issuer (on pre-{install,upgrade} phase)
+  issuerName:
+  # the kind of certificate issuer: ClusterIssuer, Issuer (meaningful only if issuer is given)
+  issuerKind: Issuer
+  certificate:
+    # number of days to make a TLS certificate valid for (meaningful only if issuer is given)
+    numDays: 730
+    # more (external to K8s cluster) DNS names to be added under SAN 
+    externalDnsNames: []
+
+image:
+  repository: rabbitmq 
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "3.13-management"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 999
+  runAsUser: 999
+  runAsGroup: 999
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  #readOnlyRootFilesystem: true
+  #runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 128Mi
+
+persistence:
+  data:
+    storageClassName: local-path
+    size: 1Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

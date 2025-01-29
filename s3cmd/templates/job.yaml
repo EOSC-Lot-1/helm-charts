@@ -1,0 +1,165 @@
+# vim: set filetype=helm:
+
+{{- with .Values.s3cmd }}
+{{- if and (eq "put" .command) (ne "s3" (urlParse .put.to).scheme ) }}
+{{ fail "expected s3://BUCKET/PREFIX/NAME as the destination of `put` command!" }}
+{{- end }}
+{{- if and (eq "get" .command) (ne "s3" (urlParse .get.from).scheme ) }}
+{{ fail "expected s3://BUCKET/PREFIX/NAME as the source of `get` command!" }}
+{{- end }}
+{{- end }}{{/* with .Values.s3cmd */}}
+
+{{- $archiveName := (and (eq "put" .Values.s3cmd.command) (.Values.s3cmd.put.archive)) | ternary (printf "%s.tar.gz" (now | unixEpoch)) nil }}
+{{- $archiveFilePath := empty $archiveName | ternary nil (printf "/tmp/%s" $archiveName) }}
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "s3cmd.jobName" . }}
+  labels:
+    {{- include "s3cmd.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "s3cmd.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "s3cmd.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      volumes:
+      - name: s3cmd-config
+        secret:
+          secretName: {{ .Values.s3cmd.config.secretName }}
+          defaultMode: 0640
+      - name: gnupg-home
+        emptyDir: {}
+      {{- if $archiveName }}
+      - name: temp
+        emptyDir: {}
+      {{- end }}{{/* if $archiveName */}}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ .Values.pv.pvcName }}
+
+      initContainers:
+      {{- if $archiveName }}
+      - name: "tar"
+        image: "busybox:1.36"
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        {{- with .Values.s3cmd }}
+        - name: INPUT_DIR
+          value: {{ empty .put.from | ternary "." .put.from }}
+        {{- end }}{{/* with .Values.s3cmd */}}
+        - name: ARCHIVE_FILE
+          value: {{ $archiveFilePath }}
+        command:
+        - tar
+        args:
+        - czv
+        - --file=$(ARCHIVE_FILE)
+        - --directory=$(INPUT_DIR)
+        - '.'
+        volumeMounts:
+        - name: temp
+          mountPath: /tmp
+        - name: data
+          mountPath: /data
+          {{- with .Values.pv.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* with .Values.pv.subPath */}}
+          readOnly: true
+        workingDir: /data
+      {{- end }}{{/* if $archiveName */}}
+
+      containers:
+      - name: "s3cmd"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        # needed for gnupg home ($HOME/.gnupg), otherwise it dependes on runAsUser
+        - name: HOME
+          value: /
+        command:
+        - s3cmd
+        - --config=/.s3cfg
+        - --verbose
+        {{- with .Values.s3cmd }}
+        {{- if .debug }}
+        - --debug
+        {{- end }}{{/* if .debug */}}
+        {{/* get  */}} 
+        {{- if eq "get" .command }}
+        - get
+        {{- if or (hasSuffix "/" .get.from) .recursive }}
+        - --recursive
+        {{- end }}{{/* if recursive */}}
+        - {{ .get.from }}
+        - {{ .get.to }}
+        {{/* put */}}
+        {{- else if eq "put" .command }}
+        - put
+        {{- if or (and (hasSuffix "/" .put.from) (empty $archiveName)) .recursive }}
+        - --recursive
+        {{- end }}{{/* if recursive */}}
+        - --no-preserve
+        {{- if .put.encrypt }}
+        - --encrypt
+        {{- end }}{{/* if .put.encrypt */}}
+        - {{ empty $archiveName | ternary .put.from $archiveFilePath }}
+        - {{ .put.to }}
+        {{- else }}
+        {{ fail "only get/put commands are supported!" }}
+        {{- end }}{{/* if eq "get" .Values.s3cmd.command */}}
+        {{- end }}{{/* with .Values.s3cmd */}}
+        workingDir: /data
+        volumeMounts:
+        - name: s3cmd-config
+          mountPath: /.s3cfg
+          subPath: s3cmd.conf
+          readOnly: true
+        - name: gnupg-home
+          mountPath: /.gnupg
+        {{- if $archiveName }}
+        - name: temp
+          mountPath: /tmp
+        {{ end }}{{/* if $archiveName */}}
+        - name: data
+          mountPath: /data
+          {{- with .Values.pv.subPath }}
+          subPath: {{ . }}
+          {{- end }}{{/* with .Values.pv.subPath */}}
+          {{- if eq .Values.s3cmd.command "put" }}
+          readOnly: true
+          {{- end }}{{/* if eq .Values.s3cmd.command "put" */}}
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

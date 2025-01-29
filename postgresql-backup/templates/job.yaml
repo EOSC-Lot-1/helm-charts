@@ -1,0 +1,17 @@
+# vim: set filetype=helm:
+
+{{- $timestamp := (now | date "20060102150405") }}
+
+---
+{{- if not (.Values.cronjob.enabled) }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s" (include "postgresql-backup.fullname" .) $timestamp }}
+  labels:
+    {{- include "postgresql-backup.labels" . | nindent 4 }}
+spec:  
+  {{- include "postgresql-backup.jobSpec" . | nindent 2 }}
+
+{{- end }}{{/* not (.Values.cronjob.enabled) */}}

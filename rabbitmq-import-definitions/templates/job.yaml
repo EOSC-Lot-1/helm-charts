@@ -1,0 +1,87 @@
+# vim: set filetype=helm:
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "rabbitmq-import-definitions.jobName" . }}
+  labels:
+    {{- include "rabbitmq-import-definitions.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "rabbitmq-import-definitions.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "rabbitmq-import-definitions.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: curlrc
+        secret:
+          secretName: {{ .Values.rabbitmqImportDefinitions.curlrc.secretName }}
+      - name: cacert
+        configMap:
+          name: {{ .Values.rabbitmqImportDefinitions.cacert.name }}
+      - name: definitions
+        configMap:
+          name: {{ .Values.rabbitmqImportDefinitions.definitions.name }}
+      - name: scripts
+        configMap:
+          name: {{ printf "%s-scripts" (include "rabbitmq-import-definitions.fullname" .) }}
+          defaultMode: 0775
+      containers:
+      - name: import-definitions
+        image: {{ .Values.curlImage }}
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command:
+        - sh
+        - /opt/bin/import-definitions.sh
+        env:
+        - name: RABBITMQ_MANAGEMENT_URL
+          value: {{ .Values.rabbitmqImportDefinitions.managementUrl }}
+        - name: RABBITMQ_VHOST
+          value: {{ .Values.rabbitmqImportDefinitions.vhost }}
+        - name: CURL_CA_BUNDLE
+          value: /ca.crt
+        volumeMounts:
+        - name: curlrc
+          mountPath: /.curlrc
+          subPath: curlrc
+          readOnly: true
+        - name: cacert
+          mountPath: /ca.crt
+          subPath: ca.crt
+          readOnly: true
+        - name: definitions
+          mountPath: /home/curl_user/definitions.json
+          subPath: definitions.json
+          readOnly: true
+        - name: scripts
+          mountPath: /opt/bin
+          readOnly: true
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

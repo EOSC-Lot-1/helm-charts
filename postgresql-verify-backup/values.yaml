@@ -1,0 +1,62 @@
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 70
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  runAsUser: 70
+  runAsGroup: 70
+  allowPrivilegeEscalation: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+backup:
+  # if empty, current date is used
+  refDate: ""
+  #refDate: "2024-12-20" 
+  s3:
+    baseUrl: s3://backups/postgres-1/
+
+postgresql:
+  image: 
+    repository: postgis/postgis
+    pullPolicy: IfNotPresent
+    tag: "15-3.3-alpine"
+
+  server:
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 768Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+
+s3cmd:
+  image: 
+    repository: ghcr.io/eosc-lot-1/s3cmd 
+    pullPolicy: IfNotPresent
+    tag: "2-alpine"
+  config:
+    secretName: s3cmd-config
+

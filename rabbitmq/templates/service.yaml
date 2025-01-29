@@ -1,0 +1,76 @@
+# vim: set syntax=helm:
+
+# headless service for RabbitMQ cluster communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "rabbitmq.serviceName" . }}
+  labels:
+    {{- include "rabbitmq.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: amqp
+    port: 5672
+    protocol: TCP
+    targetPort: 5672
+  - name: management
+    port: 15672
+    protocol: TCP
+    targetPort: 15672
+  {{- if .Values.tls.enabled }}
+  - name: amqps
+    port: 5671
+    protocol: TCP
+    targetPort: 5671
+  - name: management-https
+    port: 15671
+    protocol: TCP
+    targetPort: 15671
+  {{- end }}
+  - name: epmd
+    port: 4369
+    protocol: TCP
+    targetPort: 4369
+  - name: cluster-rpc
+    port: 25672
+    protocol: TCP
+    targetPort: 25672
+  selector:
+    {{- include "rabbitmq.selectorLabels" . | nindent 4 }}
+  sessionAffinity: None  
+  publishNotReadyAddresses: true
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ printf "%s-proxy" (include "rabbitmq.serviceName" .) }}
+  labels:
+    {{- include "rabbitmq.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  ports:
+  - name: amqp
+    port: 5672
+    protocol: TCP
+    targetPort: 5672
+  - name: management
+    port: 15672
+    protocol: TCP
+    targetPort: 15672
+  {{- if .Values.tls.enabled }}
+  - name: amqps
+    port: 5671
+    protocol: TCP
+    targetPort: 5671
+  - name: management-https
+    port: 15671
+    protocol: TCP
+    targetPort: 15671
+  {{- end }}
+  selector:
+    {{- include "rabbitmq.selectorLabels" . | nindent 4 }}
+

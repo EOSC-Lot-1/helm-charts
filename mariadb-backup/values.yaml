@@ -1,0 +1,89 @@
+image:
+  repository: mariadb
+  pullPolicy: IfNotPresent
+  tag: "10.11"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 999
+  runAsGroup: 999
+  fsGroup: 999
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+cronjob:
+  # if not enabled, fire an one-off job
+  enabled: true
+  suspend: true
+  schedule: '30 01 * * ?'
+
+backup:
+  # target of the backup (in a PV)
+  outputFile:
+    pvcName: backups
+    subPath: ~
+    #fileName: backup.sql.gz
+  # (optional) upload the backup file to an S3 bucket
+  s3:
+    bucket: ~
+    #bucket: backups
+    #prefix: mariadb
+    ## for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
+    #encrypt: false
+  database:
+    name: example
+    host: mariadb
+    # .. or
+    #host:
+    #  configName: base-env
+    #  key: MARIADB_HOST
+    port: "3306"
+    # .. or
+    #port:
+    #  configName: base-env
+    #  key: MARIADB_PORT
+    user: postgres
+    password:
+      secretName: mariadb-password
+      key: password
+
+## s3cmd only needed if an s3 bucket is also specified
+s3cmd:
+  image:
+    repository: ghcr.io/eosc-lot-1/s3cmd
+    pullPolicy: IfNotPresent
+    tag: 2-alpine
+  config:
+    secretName: s3cmd-config
+  debug: false
+

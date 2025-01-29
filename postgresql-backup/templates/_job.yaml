@@ -1,0 +1,207 @@
+{{/* vim: set syntax=helm: */}}
+
+{{/*
+Define the pod spec
+*/}}
+{{- define "postgresql-backup.podSpec" -}}
+
+restartPolicy: Never
+{{- with .Values.imagePullSecrets }}
+imagePullSecrets:
+  {{- toYaml . | nindent 8 }}
+{{- end }}
+serviceAccountName: {{ include "postgresql-backup.serviceAccountName" . }}
+securityContext:
+  {{- toYaml .Values.podSecurityContext | nindent 2 }}
+volumes:
+- name: output
+  persistentVolumeClaim:
+    claimName: {{ .Values.backup.outputFile.pvcName }}
+- name: temp
+  emptyDir: {}
+{{- if .Values.backup.s3.bucket }}
+- name: s3cmd-config
+  secret:
+    secretName: {{ .Values.s3cmd.config.secretName }}
+    defaultMode: 0640
+- name: gnupg-home
+  emptyDir: {}
+{{- end }}
+
+initContainers:
+- name: backup
+  image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+  imagePullPolicy: {{ .Values.image.pullPolicy }}
+  securityContext:
+    {{- toYaml .Values.securityContext | nindent 4 }}
+  env:
+  - name: _POD_ID
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.uid
+  - name: OUTPUT_NAME
+    value: $(_POD_ID).sql.gz
+  {{- with .Values.backup.database }}
+  - name: PGDATABASE
+    value: {{ eq "ALL" .name | ternary "postgres" .name }}
+  - name: PGUSER
+    value: {{ .user | default "postgres" }}
+  - name: PGPORT
+  {{- if eq "string" (kindOf .port) }}
+    value: {{ .port | squote }}
+  {{- else }}
+    valueFrom:
+      configMapKeyRef:
+        name: {{ .port.configName }}
+        key: {{ .port.key }}
+  {{- end }}{{/* if eq "string" (kindOf .port) */}}
+  - name: PGHOST
+  {{- if eq "string" (kindOf .host) }}
+    value: {{ .host }}
+  {{- else }}
+    valueFrom:
+      configMapKeyRef:
+        name: {{ .host.configName }}
+        key: {{ .host.key }}
+  {{- end }}{{/* if eq "string" (kindOf .host) */}}
+  - name: PGPASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ .password.secretName }}
+        key: {{ .password.key | default "password" }}
+  command:
+  - sh
+  - -xue
+  - -o
+  - pipefail
+  - -c
+  {{- if eq "ALL" .name }}
+  - >-
+    pg_dumpall -v | gzip -c -9 > ${OUTPUT_NAME}
+  {{- else }}
+  - >-
+    pg_dump -v -Fp --compress=9 --file ${OUTPUT_NAME}
+  {{- end }}{{/* if eq "ALL" .name */}}
+  {{- end }}{{/* with .Values.backup.database */}}
+  workingDir: /work
+  volumeMounts:
+  {{- with .Values.backup.outputFile }}
+  - name: output
+    mountPath: /work
+    {{- with .subPath }}
+    subPath: {{ . }}
+    {{- end }}{{/* with .subPath */}}
+  {{- end }}{{/* with .Values.backup.outputFile */}}
+  resources: {{- toYaml .Values.resources | nindent 4 }}
+{{- if .Values.backup.s3.bucket }}
+- name: s3cmd
+  image: "{{ .Values.s3cmd.image.repository }}:{{ .Values.s3cmd.image.tag }}"
+  imagePullPolicy: {{ .Values.s3cmd.image.pullPolicy }}
+  securityContext:
+    {{- toYaml .Values.securityContext | nindent 4 }}
+  env:
+  - name: _POD_ID
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.uid
+  - name: OUTPUT_NAME
+    value: $(_POD_ID).sql.gz
+  - name: BASE_URL
+    value: {{ printf "s3://%s/%s" (.Values.backup.s3.bucket) (.Values.backup.s3.prefix | default "") }}
+  - name: OUTPUT_URL
+    value: $(BASE_URL)/$(OUTPUT_NAME)
+  command:
+  - s3cmd
+  {{- if .Values.s3cmd.debug }}
+  - --debug
+  {{- else }}
+  - --verbose
+  {{- end }}{{/* if .Values.s3cmd.debug */}}
+  {{- if .Values.backup.s3.encrypt }}
+  - --encrypt
+  {{- end }}{{/* if .Values.backup.s3.encrypt */}}
+  - --no-preserve
+  - put
+  - $(OUTPUT_NAME)
+  - $(OUTPUT_URL)
+  workingDir: /work
+  volumeMounts:
+  - name: s3cmd-config
+    mountPath: /.s3cfg
+    subPath: s3cmd.conf
+    readOnly: true
+  - name: gnupg-home
+    mountPath: /.gnupg
+  - name: temp
+    mountPath: /tmp
+  {{- with .Values.backup.outputFile }}
+  - name: output
+    mountPath: /work
+    {{- with .subPath }}
+    subPath: {{ . }}
+    {{- end }} {{/* with .subPath */}}
+  {{- end }}{{/* with .Values.backup.outputFile */}}
+  resources: {{- toYaml .Values.resources | nindent 4 }}
+{{- end }}{{/* if .Values.backup.s3.bucket */}}
+
+containers:
+- name: stat
+  image: busybox:1.36
+  securityContext:
+    {{- toYaml .Values.securityContext | nindent 4 }}
+  env:
+  - name: _POD_ID
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.uid
+  - name: OUTPUT_NAME
+    value: $(_POD_ID).sql.gz
+  command:
+  - stat
+  - $(OUTPUT_NAME)
+  workingDir: /work
+  volumeMounts:
+  {{- with .Values.backup.outputFile }}
+  - name: output
+    mountPath: /work
+    {{- with .subPath }}
+    subPath: {{ . }}
+    {{- end }}{{/* with .subPath */}}
+  {{- end }}{{/* with .Values.backup.outputFile */}}
+  resources: {{- toYaml .Values.resources | nindent 4 }}
+{{- with .Values.nodeSelector }}
+nodeSelector:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.affinity }}
+affinity:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.tolerations }}
+tolerations:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+
+{{- end }}{{/* define "postgresql-backup.podSpec" */}}
+
+
+{{/*
+Define the pod spec
+*/}}
+{{- define "postgresql-backup.jobSpec" -}}
+
+backoffLimit: 1
+completions: 1
+parallelism: 1
+template:
+  metadata:
+    {{- with .Values.podAnnotations }}
+    annotations:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    labels:
+      {{- include "postgresql-backup.selectorLabels" . | nindent 6 }}
+  spec:
+    {{- include "postgresql-backup.podSpec" . | nindent 4 }}
+
+{{- end }}{{/* define "postgresql-backup.jobSpec" */}}

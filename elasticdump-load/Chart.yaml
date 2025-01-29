@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: v6.110.0
+description: A Helm chart for loading an index from an Elasticdump dump
+name: elasticdump-load
+type: application
+version: 0.1.0

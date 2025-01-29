@@ -1,0 +1,142 @@
+# vim: set filetype=helm:
+
+{{- $refDate := ((empty .Values.backup.refDate) | ternary now (.Values.backup.refDate | toDate "2006-01-02")) }}
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s" (include "postgresql-verify-backup.fullname" .) ($refDate | date "20060102")  }}
+  labels:
+    {{- include "postgresql-verify-backup.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "postgresql-verify-backup.selectorLabels" . | nindent 8 }}
+    spec:
+      shareProcessNamespace: true 
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "postgresql-verify-backup.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: work
+        emptyDir: {}
+      - name: secrets
+        emptyDir: {}
+      - name: pgdata
+        emptyDir: {}
+      - name: s3cmd-config
+        secret:
+          secretName: {{ .Values.s3cmd.config.secretName }}
+      
+      initContainers:
+      - name: generate-postgres-password
+        image: busybox:1.30
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        workingDir: /secrets
+        command:
+        - sh
+        - -xue
+        - -c
+        args:
+        - |-
+          touch postgres-password && chmod 0600 postgres-password 
+          dd if=/dev/urandom bs=9 count=1 status=none | base64 > postgres-password
+        volumeMounts:
+        - name: secrets
+          mountPath: /secrets
+      - name: get-backup
+        image: "{{ .Values.s3cmd.image.repository }}:{{ .Values.s3cmd.image.tag }}"
+        imagePullPolicy: {{ .Values.s3cmd.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        workingDir: /work
+        env: 
+        - name: REF_DATE
+          value: {{ $refDate | date "2006-01-02" }}
+        - name: S3_BASE_URL
+          value: {{ .Values.backup.s3.baseUrl }}
+        command: 
+        - sh
+        - -xue
+        - -c
+        args:
+        - |-
+          refDate=${REF_DATE:-$(date +%Y-%m-%d)}
+          backupFile=$(s3cmd ls ${S3_BASE_URL} | grep -e "^${refDate}" | head -n1 | awk '{print $4}')
+          [[ -n "${backupFile}" ]]
+          basename ${backupFile} | grep -E -e '^[-a-z0-9]+[.]sql[.]gz$'  
+          s3cmd -v get ${backupFile} backup.sql.gz
+        volumeMounts:
+        - name: work
+          mountPath: /work
+        - name: s3cmd-config
+          mountPath: /.s3cfg
+          subPath: s3cmd.conf
+
+      containers:
+      - name: postgres
+        image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.postgresql.server.securityContext | nindent 10 }}
+        env:
+        - name: POSTGRES_PASSWORD_FILE
+          value: /secrets/postgres-password
+        volumeMounts:
+        - name: pgdata
+          mountPath: /var/lib/postgresql/data
+        - name: secrets
+          mountPath: /secrets
+        resources:
+          {{- toYaml .Values.postgresql.server.resources | nindent 10 }}
+
+      - name: cli
+        image: "{{ .Values.postgresql.image.repository }}:{{ .Values.postgresql.image.tag }}"
+        imagePullPolicy: {{ .Values.postgresql.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command: 
+        - sh
+        - -xue
+        - -c
+        - |-
+          while ! pg_isready; do sleep 3s; done
+          zcat backup.sql.gz | psql
+          pg_ctl stop
+        env:
+        - name: PGHOST
+          value: localhost
+        workingDir: /work
+        volumeMounts:
+        - name: work
+          mountPath: /work
+        - name: pgdata
+          mountPath: /var/lib/postgresql/data
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
