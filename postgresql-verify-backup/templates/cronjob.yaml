@@ -1,0 +1,24 @@
+# vim: set filetype=helm:
+
+---
+{{- if .Values.cronjob.enabled }}
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "postgresql-verify-backup.fullname" . }}
+  labels:
+    {{- include "postgresql-verify-backup.labels" . | nindent 4 }}
+spec:
+  suspend: {{ .Values.cronjob.suspend }}
+  schedule: {{ .Values.cronjob.schedule }}
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  jobTemplate:
+    metadata:
+      name: {{ include "postgresql-verify-backup.fullname" . }}
+    spec:
+      {{- include "postgresql-verify-backup.jobSpec" . | nindent 6 }}
+
+{{- end }}{{/* .Values.cronjob.enabled */}}
+
