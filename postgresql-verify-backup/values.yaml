@@ -28,19 +28,25 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
+cronjob:
+  # if not enabled, fire an one-off job
+  enabled: false
+  suspend: true
+  schedule: '30 01 * * ?'
+
 backup:
-  # if empty, current date is used
+  # if empty or if job is ran as part of a cronjob, current date is used
   refDate: ""
-  #refDate: "2024-12-20" 
+  #refDate: "2024-12-20"
   s3:
-    baseUrl: s3://backups/postgres-1/
+    bucket: backups
+    prefix: postgres-1
 
 postgresql:
-  image: 
+  image:
     repository: postgis/postgis
     pullPolicy: IfNotPresent
     tag: "15-3.3-alpine"
-
   server:
     resources:
       requests:
@@ -53,10 +59,9 @@ postgresql:
       allowPrivilegeEscalation: false
 
 s3cmd:
-  image: 
-    repository: ghcr.io/eosc-lot-1/s3cmd 
+  image:
+    repository: ghcr.io/eosc-lot-1/s3cmd
     pullPolicy: IfNotPresent
     tag: "2-alpine"
   config:
     secretName: s3cmd-config
-
