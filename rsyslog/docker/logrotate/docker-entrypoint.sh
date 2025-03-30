@@ -2,7 +2,7 @@
 set -ue
 
 crontabFile=$(mktemp -p/tmp crontab.XXXXXX)
-logrotateArgs="--verbose --state=/var/lib/logrotate/logrotate.status /etc/logrotate.conf"
+logrotateStateFile=$(mktemp -p/tmp logrotate.XXXXXX)
 
-echo "${CRON_SCHEDULE} logrotate ${logrotateArgs}" | tee ${crontabFile} 
+echo "${CRON_SCHEDULE} logrotate -v -s ${logrotateStateFile} /etc/logrotate.conf" | tee ${crontabFile} 
 exec supercronic ${crontabFile}
