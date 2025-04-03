@@ -17,11 +17,13 @@ RUN  wget "${SUPERCRONIC_URL}" -q -O /usr/local/bin/supercronic \
 RUN addgroup -g 1000 logrotate \
   && adduser -D -G logrotate -u 1000 -h /var/lib/logrotate logrotate
 
-COPY ./crontab ./logrotate.conf /etc/
+COPY ./logrotate.conf /etc/
+COPY ./docker-entrypoint.sh /
 
 VOLUME [ "/var/log/" ]
 
-ENV TZ="Europe/Athens"
+ENV TZ="Europe/Athens" \
+  CRON_SCHEDULE="15 */3 * * * * *"
 
 USER logrotate
-CMD ["supercronic", "/etc/crontab"]
+ENTRYPOINT [ "/docker-entrypoint.sh" ]

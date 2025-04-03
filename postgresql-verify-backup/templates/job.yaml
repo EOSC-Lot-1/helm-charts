@@ -1,0 +1,15 @@
+# vim: set filetype=helm:
+
+---
+{{- if not (.Values.cronjob.enabled) }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "postgresql-verify-backup.jobName" . }}
+  labels:
+    {{- include "postgresql-verify-backup.labels" . | nindent 4 }}
+spec:  
+  {{- include "postgresql-verify-backup.jobSpec" . | nindent 2 }}
+
+{{- end }}{{/* not (.Values.cronjob.enabled) */}}
