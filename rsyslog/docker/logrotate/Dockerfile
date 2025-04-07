@@ -18,6 +18,8 @@ RUN addgroup -g 1000 logrotate \
   && adduser -D -G logrotate -u 1000 -h /var/lib/logrotate logrotate
 
 COPY ./logrotate.conf /etc/
+COPY ./logrotate.d/ /etc/logrotate.d/
+
 COPY ./docker-entrypoint.sh /
 
 VOLUME [ "/var/log/" ]
