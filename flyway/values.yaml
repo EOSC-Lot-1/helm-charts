@@ -82,6 +82,8 @@ flyway:
     jdbc:postgresql://postgres.default.svc.cluster.local/helloworld?
   # database user
   user: postgres
-  # name of the secret holding the password (as "password") for the database user
+  # ref to secret key holding the password for the database user
   password:
-    secretName: postgres-password
+    secretKeyRef:
+      name: postgres-password
+      key: password
