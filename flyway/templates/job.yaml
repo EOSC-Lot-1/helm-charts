@@ -108,9 +108,7 @@ spec:
           value: {{ .Values.flyway.user }}
         - name: FLYWAY_PASSWORD
           valueFrom:
-            secretKeyRef:
-              name: {{ .Values.flyway.password.secretName }}
-              key: password
+            secretKeyRef: {{ toYaml .Values.flyway.password.secretKeyRef | nindent 14 }}
         volumeMounts:
         - name: work
           mountPath: /flyway/sql
