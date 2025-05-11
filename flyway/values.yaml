@@ -57,6 +57,10 @@ checkout:
     branch: master
     path: src/main/resources/db/migration
 
+# mimic this feature (not available in community edition): 
+# https://documentation.red-gate.com/fd/flyway-ignore-migration-patterns-setting-277579002.html
+ignoreRepeatableMigrations: false
+
 flyway:
   image:
     repository: flyway/flyway
