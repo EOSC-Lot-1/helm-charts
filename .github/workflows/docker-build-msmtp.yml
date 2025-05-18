@@ -1,5 +1,5 @@
 name: CI - ssmtp
-run-name: Build container image for ssmtp
+run-name: Build container image for msmtp
 
 on: 
   push:
