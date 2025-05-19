@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: '1.8'
+description: A Helm chart for sending email with msmtp
+name: msmtp
+type: application
+version: 0.1.0

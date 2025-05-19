@@ -81,6 +81,27 @@ spec:
           mountPath: {{ .Values.checkout.homeDir }}/.ssh/known_hosts
           subPath: ssh_known_hosts
         {{- end }}{{/* ssh repo URL */}}
+      - name: filter-sql
+        image: busybox:1
+        securityContext:
+          {{- toYaml .Values.checkout.securityContext | nindent 10 }}
+        env:
+        - name: PATH_TO_CHECKOUT
+          value: {{ .Values.checkout.repository.path }}
+        - name: IGNORE_REPEATABLE_MIGRATIONS
+          value: {{ .Values.ignoreRepeatableMigrations | ternary "t" "f" | squote }}
+        command:
+        - sh
+        - -eux
+        args:
+        - -c
+        - |-
+          test ${IGNORE_REPEATABLE_MIGRATIONS} == 'f' || rm -fv -- R__*.sql
+        workingDir: /flyway/sql
+        volumeMounts:
+        - name: work
+          mountPath: /flyway/sql
+          subPathExpr: $(PATH_TO_CHECKOUT)
       containers:
       - name: flyway
         image: "{{ .Values.flyway.image.repository }}:{{ .Values.flyway.image.tag }}"
@@ -108,9 +129,7 @@ spec:
           value: {{ .Values.flyway.user }}
         - name: FLYWAY_PASSWORD
           valueFrom:
-            secretKeyRef:
-              name: {{ .Values.flyway.password.secretName }}
-              key: password
+            secretKeyRef: {{ toYaml .Values.flyway.password.secretKeyRef | nindent 14 }}
         volumeMounts:
         - name: work
           mountPath: /flyway/sql
