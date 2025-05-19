@@ -59,7 +59,10 @@ smtp:
 email:
   #to: "recipient@example.com"
   
-  #subject: "Hello from Kubernetes Job"
+  # For subject, date-formatted string is supported
+  # (https://man7.org/linux/man-pages/man1/date.1.html)
+
+  #subject: "Hello from Kubernetes Job (%d-%m-%Y)"
   # or ..
   #subjectFrom:
   #  configmapName:
@@ -71,8 +74,11 @@ email:
   #  configmapName:
   #  key:
 
+  # For file paths, date-formatted strings is also supported
+  
   attachments:
     #pvcName: my-data
     #subPath: /images
     #files: 
-    #- /aaa/bbb/1.png
+    #- path: /aaa/bbb/%Y/graph-%Y-%m.png
+    #  name: graph.png   
