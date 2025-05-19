@@ -42,7 +42,7 @@ template:
         claimName: {{ .Values.email.attachments.pvcName }}
     {{- end }}{{/* if .Values.email.attachments */}}
     containers:
-    - name: msmtp
+    - name: send-email
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
       imagePullPolicy: {{ .Values.image.pullPolicy }}
       securityContext:
@@ -53,12 +53,7 @@ template:
       args:
       - -c
       - |-
-         muttAttachmentArgs=( )
-         if [[ -n "${EMAIL_ATTACHMENTS}" ]]; then
-           read -ra attachmentFiles <<<"${EMAIL_ATTACHMENTS}"
-           muttAttachmentArgs=( "-a" ${attachmentFiles[@]/*/'attachments/'&} )
-         fi 
-         mutt -s "${EMAIL_SUBJECT}" ${muttAttachmentArgs[@]} -- ${TO_EMAIL} <<<"${EMAIL_BODY}"
+        {{- (.Files.Get "files/send-email.sh") | nindent 10 }}
       env:
       - name: TO_EMAIL
         value: {{ .Values.email.to }}
@@ -80,10 +75,14 @@ template:
             name: {{ .Values.email.bodyFrom.configmapName }}
             key: {{ .Values.email.bodyFrom.key }}
         {{- end }}{{/* .Values.email.body */}}
-      - name: EMAIL_ATTACHMENTS
-        {{- if .Values.email.attachments }}
-        value: {{ join " " .Values.email.attachments.files }}
-        {{- end }}{{/* if .Values.email.attachments */}}
+      {{- if .Values.email.attachments }}
+      {{- range $index, $attachment := .Values.email.attachments.files }}
+      - name: {{ printf "EMAIL_ATTACHMENTS_%d_NAME" $index }}
+        value: {{ $attachment.name | quote}}
+      - name: {{ printf "EMAIL_ATTACHMENTS_%d_PATH" $index }}
+        value: {{ $attachment.path | quote }}
+      {{- end }}{{/* range .Values.email.attachments.files */}}
+      {{- end }}{{/* if .Values.email.attachments */}}
       volumeMounts:
       - name: mailer-config
         mountPath: /home/user1/.muttrc
