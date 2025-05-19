@@ -1,0 +1,78 @@
+image:
+  repository: ghcr.io/eosc-lot-1/msmtp 
+  pullPolicy: IfNotPresent
+  tag: "1"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  #readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+cronjob:
+  # if not enabled, fire an one-off job
+  enabled: false
+  suspend: true
+  schedule: '30 01 * * ?'
+
+smtp:
+  # a secret with the following keys: server, port, user, password, from
+  secretName: smtp
+
+email:
+  #to: "recipient@example.com"
+  
+  #subject: "Hello from Kubernetes Job"
+  # or ..
+  #subjectFrom:
+  #  configmapName:
+  #  key:
+
+  #body: "This is a test email sent from a Kubernetes Job."
+  # or ..
+  #bodyFrom:
+  #  configmapName:
+  #  key:
+
+  attachments:
+    #pvcName: my-data
+    #subPath: /images
+    #files: 
+    #- /aaa/bbb/1.png

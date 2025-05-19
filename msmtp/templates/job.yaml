@@ -1,0 +1,17 @@
+# vim: set filetype=helm:
+
+{{- $timestamp := (now | date "20060102150405") }}
+
+---
+{{- if not (.Values.cronjob.enabled) }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-%s" (include "msmtp.fullname" .) $timestamp }}
+  labels:
+    {{- include "msmtp.labels" . | nindent 4 }}
+spec:  
+  {{- include "msmtp.jobSpec" . | nindent 2 }}
+
+{{- end }}{{/* not (.Values.cronjob.enabled) */}}

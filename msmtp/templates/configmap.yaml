@@ -1,0 +1,24 @@
+# vim: set syntax=helm:
+
+{{- $fullname := (include "msmtp.fullname" .) }}
+
+{{- $smtpSecret := lookup "v1" "Secret" .Release.Namespace .Values.smtp.secretName }}
+{{- $smtp := dict }}
+{{- if $smtpSecret }}
+  {{- range $key := tuple "server" "port" "from" "user" }}
+    {{- $_ := set $smtp $key ((get (get $smtpSecret "data") $key) | b64dec) }}
+  {{- end }}{{/* range */}}
+{{- end }}{{/* if $smtpSecret */}}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-config" $fullname }}
+  labels:
+    {{- include "msmtp.labels" . | nindent 4 }}
+data:
+  .muttrc: |-
+    {{- tpl (.Files.Get "files/muttrc.tpl") $smtp | nindent 4 }}
+  .msmtprc: |-
+    {{- tpl (.Files.Get "files/msmtprc.tpl") $smtp | nindent 4 }}
