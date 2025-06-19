@@ -10,6 +10,9 @@ serviceAccount:
 
 podAnnotations: {}
 
+jobAnnotations: {}
+jobBackoffLimit: 1
+
 podSecurityContext:
   fsGroup: 1000
   runAsUser: 1000
