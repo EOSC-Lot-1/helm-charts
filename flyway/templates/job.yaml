@@ -5,8 +5,12 @@ metadata:
   name: {{ include "flyway.jobName" . }}
   labels:
     {{- include "flyway.labels" . | nindent 4 }}
+  {{- with .Values.jobAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
-  backoffLimit: 1
+  backoffLimit: {{ .Values.jobBackoffLimit | int }}
   completions: 1
   parallelism: 1
   template:
