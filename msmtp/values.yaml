@@ -52,6 +52,9 @@ cronjob:
   suspend: true
   schedule: '30 01 * * ?'
 
+# or an actual date string (e.g. 2025-07-15); affects date-formatted strings
+refDate: now
+
 smtp:
   # a secret with the following keys: server, port, user, password, from
   secretName: smtp
