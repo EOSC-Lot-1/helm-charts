@@ -55,6 +55,8 @@ template:
       - |-
         {{- (.Files.Get "files/send-email.sh") | nindent 10 }}
       env:
+      - name: REF_DATE
+        value: {{ .Values.refDate }}
       - name: TO_EMAIL
         value: {{ .Values.email.to }}
       - name: EMAIL_SUBJECT
