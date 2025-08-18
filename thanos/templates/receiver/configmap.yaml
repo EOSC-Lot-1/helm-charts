@@ -1,0 +1,20 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $serviceName := (include "thanos.serviceNameForReceiver" .) }}
+{{- $serviceFqdn := (include "thanos.serviceFqdnForReceiver" .) }}
+
+{{- $endpoints := list }}
+{{- range $i := until (int .Values.receiver.replicaCount) }}
+{{- $endpoints = append $endpoints (printf "%s-%d.%s:10901" $serviceName $i $serviceFqdn) }}
+{{- end }}
+
+{{- $hashrings := list (dict "name" "" "tenants" (list "default-tenant") "endpoints" $endpoints)  }}
+
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ printf "%s-hashrings" $serviceName }}
+data:
+  hashrings.json: |-
+    {{- $hashrings | toPrettyJson | nindent 4 }}

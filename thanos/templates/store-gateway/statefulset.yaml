@@ -1,0 +1,95 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $serviceName := (include "thanos.serviceNameForStore" .) }}
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "thanos.labelsForStore" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.store.replicaCount }}
+  serviceName: {{ $serviceName }}
+  selector:
+    matchLabels:
+      {{- include "thanos.selectorLabelsForStore" . | nindent 6 }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        {{- include "thanos.labelsForStore" . | nindent 8 }}
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: {{ .Values.store.dataPvc.storageClassName }}
+      resources:
+        requests:
+          storage: {{ .Values.store.dataPvc.size }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "thanos.labelsForStore" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "thanos.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: bucket-config
+        secret:
+          secretName: {{ include "thanos.objstoreSecretName" . }}
+      containers:
+      - name: store
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - store
+        - --data-dir=/data
+        - --objstore.config-file=/config/bucket-config.yaml
+        - --http-address=0.0.0.0:10908
+        - --grpc-address=0.0.0.0:10901
+        - --log.level={{ .Values.store.logLevel }}
+        livenessProbe:
+          {{- include "thanos.livenessProbe" . | nindent 10 }}
+        readinessProbe:
+          {{- include "thanos.readinessProbe" . | nindent 10 }}
+        resources:
+          {{- toYaml .Values.store.resources | nindent 10 }}
+        volumeMounts:
+        - name: bucket-config
+          mountPath: /config/bucket-config.yaml
+          subPath: objstore.yml
+          readOnly: true
+        - name: data
+          mountPath: /data
+        ports:  
+        - name: http 
+          containerPort: 10908
+        - name: grpc
+          containerPort: 10901
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

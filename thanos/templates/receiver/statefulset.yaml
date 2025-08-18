@@ -1,0 +1,121 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $serviceName := (include "thanos.serviceNameForReceiver" .) }}
+{{- $serviceFqdn := (include "thanos.serviceFqdnForReceiver" .) }}
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "thanos.labelsForReceiver" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.receiver.replicaCount }}
+  serviceName: {{ $serviceName }}
+  selector:
+    matchLabels:
+      {{- include "thanos.selectorLabelsForReceiver" . | nindent 6 }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        {{- include "thanos.labelsForReceiver" . | nindent 8 }}
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      storageClassName: {{ .Values.receiver.dataPvc.storageClassName }}
+      resources:
+        requests:
+          storage: {{ .Values.receiver.dataPvc.size }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "thanos.labelsForReceiver" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "thanos.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      - name: hashrings
+        configMap:
+          name: {{ printf "%s-hashrings" $serviceName }}
+      - name: bucket-config
+        secret:
+          secretName: {{ include "thanos.objstoreSecretName" . }}
+      containers:
+      - name: receiver
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: _POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: _SERVICE_NAME
+          value: {{ $serviceName }}  
+        args:
+        - receive
+        - --tsdb.path=/data
+        - --objstore.config-file=/config/bucket-config.yaml
+        - --http-address=0.0.0.0:10908
+        - --grpc-address=0.0.0.0:10901
+        - --receive.local-endpoint=$(_POD_NAME).{{ $serviceFqdn }}:10901
+        - --receive.hashrings-file=/config/hashrings.json
+        - --receive.replication-factor={{ .Values.receiver.replicationFactor }}
+        - --log.level={{ .Values.receiver.logLevel }}
+        - --remote-write.address=0.0.0.0:19291
+        - --tsdb.retention={{ .Values.receiver.tsdb.retention }}
+        - --label=receive_replica="$(_POD_NAME)"
+        {{- range $key, $value := .Values.receiver.metricLabels }}
+        - --label={{ $key }}={{ $value | quote }}
+        {{- end }}{{/* range .Values.receiver.metricLabels */}}
+        livenessProbe:
+          {{- include "thanos.livenessProbe" . | nindent 10 }}
+        readinessProbe:
+          {{- include "thanos.readinessProbe" . | nindent 10 }}
+        resources:
+          {{- toYaml .Values.receiver.resources | nindent 10 }}
+        volumeMounts:
+        - name: hashrings
+          mountPath: /config/hashrings.json
+          subPath: hashrings.json
+          readOnly: true
+        - name: bucket-config
+          mountPath: /config/bucket-config.yaml
+          subPath: objstore.yml
+          readOnly: true
+        - name: data
+          mountPath: /data
+        ports:  
+        - name: http 
+          containerPort: 10908
+        - name: grpc
+          containerPort: 10901
+        - name: remote-write
+          containerPort: 19291
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,24 @@
+# vim: set syntax=helm:
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "thanos.serviceNameForQuerier" . }}
+  labels:
+    {{- include "thanos.labelsForQuerier" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: grpc
+    port: 10901
+    protocol: TCP
+    targetPort: 10901
+  - name: http
+    port: 10908
+    protocol: TCP
+    targetPort: 10908
+  selector:
+    {{- include "thanos.selectorLabelsForQuerier" . | nindent 4 }}
+
+

@@ -1,0 +1,43 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- if .Values.querier.ingress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    {{- if eq .Values.querier.ingress.issuerKind "Issuer" }}
+    cert-manager.io/issuer: {{ .Values.querier.ingress.issuerName }}
+    {{- else }}
+    cert-manager.io/cluster-issuer: {{ .Values.querier.ingress.issuerName }}
+    {{- end }}{{/* if issuerKind */}}
+    kubernetes.io/ingress.class: {{ .Values.querier.ingress.ingressClassName }}
+    {{- with .Values.querier.ingress.basicAuth }}
+    nginx.ingress.kubernetes.io/auth-realm: Authentication Required - Thanos
+    nginx.ingress.kubernetes.io/auth-secret: {{ .secretName }}
+    nginx.ingress.kubernetes.io/auth-type: basic
+    {{- end }}{{/* with basicAuth */}}
+    {{- with .Values.querier.ingress.whitelistRange }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: {{ . }}
+    {{- end }}{{/* with whitelistRange */}}
+  labels:
+    {{- include "thanos.labels" . | nindent 4 }}
+  name: {{ printf "%s-querier" (include "thanos.fullname" .) }}
+spec:
+  ingressClassName: {{ .Values.querier.ingress.ingressClassName }}
+  rules:
+  - host: {{ .Values.querier.ingress.hostname }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: {{ include "thanos.serviceNameForQuerier" . }}
+            port:
+              number: 10908 
+        path: /
+        pathType: ImplementationSpecific
+  tls:
+  - hosts:
+    - {{ .Values.querier.ingress.hostname }}
+    secretName: {{ printf "%s-querier-ingress-tls" (include "thanos.fullname" .) }}
+{{- end }}{{/* if .Values.querier.ingress.enabled */}}

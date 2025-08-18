@@ -1,0 +1,74 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $serviceName := (include "thanos.serviceNameForQuerier" .) }}
+{{- $serviceFqdnForReceiver := (include "thanos.serviceFqdnForReceiver" .) }}
+{{- $serviceFqdnForStore := (include "thanos.serviceFqdnForStore" .) }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "thanos.labelsForQuerier" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.querier.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "thanos.selectorLabelsForQuerier" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "thanos.labelsForQuerier" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "thanos.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: querier
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        args:
+        - query
+        - --http-address=0.0.0.0:10908
+        - --grpc-address=0.0.0.0:10901
+        - --log.level={{ .Values.querier.logLevel }}
+        - --query.replica-label=receive_replica
+        - --endpoint=dns+{{ $serviceFqdnForReceiver }}:10901
+        - --endpoint=dns+{{ $serviceFqdnForStore }}:10901
+        livenessProbe:
+          {{- include "thanos.livenessProbe" . | nindent 10 }}
+        readinessProbe:
+          {{- include "thanos.readinessProbe" . | nindent 10 }}
+        resources:
+          {{- toYaml .Values.querier.resources | nindent 10 }}
+        ports:  
+        - name: http 
+          containerPort: 10908
+        - name: grpc
+          containerPort: 10901
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
