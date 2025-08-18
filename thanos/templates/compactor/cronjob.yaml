@@ -1,0 +1,86 @@
+# vim: set filetype=helm:
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ printf "%s-compactor" (include "thanos.fullname" .) }}
+  labels:
+    {{- include "thanos.labelsForCompactor" . | nindent 4 }}
+spec:
+  suspend: {{ .Values.compactor.cronjob.suspend }}
+  schedule: {{ .Values.compactor.cronjob.schedule }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 8
+  failedJobsHistoryLimit: 8
+  jobTemplate:
+    metadata:
+      name: {{ printf "%s-compactor" (include "thanos.fullname" .)  }}
+    spec:
+      backoffLimit: 6
+      completions: 1
+      parallelism: 1
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "thanos.selectorLabelsForCompactor" . | nindent 12 }}
+            {{- with .Values.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        spec:
+          restartPolicy: Never
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          serviceAccountName: {{ include "thanos.serviceAccountName" . }}
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          volumes:
+          - name: data
+            emptyDir: {}
+          - name: bucket-config
+            secret:
+              secretName: {{ include "thanos.objstoreSecretName" . }}
+          containers:
+          - name: compactor
+            securityContext:
+              {{- toYaml .Values.securityContext | nindent 14 }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            args:
+            - compact
+            - --data-dir=/data
+            - --objstore.config-file=/config/bucket-config.yaml
+            - --log.level={{ .Values.compactor.logLevel }}
+            {{- range $key, $value := .Values.compactor.retentionResolution }}
+            - --retention.resolution-{{ $key }}={{ $value }}
+            {{- end }}{{/* range */}}
+            - --deduplication.replica-label=receive_replica
+            - --compact.concurrency=1
+            - --downsample.concurrency=1
+            volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: bucket-config
+              mountPath: /config/bucket-config.yaml
+              subPath: objstore.yml
+              readOnly: true
+            resources:
+              {{- toYaml .Values.compactor.resources | nindent 14 }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

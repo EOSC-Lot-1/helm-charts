@@ -1,0 +1,119 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: quay.io/thanos/thanos
+  # This sets the pull policy for images.
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "v0.39.2"
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true
+
+objstore:
+  secretName: ~
+
+receiver:
+  replicaCount: 1
+  replicationFactor: 1
+  dataPvc:
+    storageClassName: local-path
+    size: 24Gi
+  logLevel: info
+  # additional labels to attach to received metrics
+  metricLabels: []
+    #foo: bar
+  # configuration for receiver-local TSDB
+  tsdb:
+    retention: 31d
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+querier:
+  replicaCount: 1
+  logLevel: info
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+  ingress: 
+    enabled: false
+    ingressClassName: nginx-1
+    hostname: thanos.example.intranet
+    issuerName: ca-1-issuer 
+    issuerKind: ClusterIssuer
+    basicAuth:
+      # use htpasswd format under "auth" key
+      #secretName: thanos-1-basic-auth
+    #whitelistRange: 192.168.5.0/24
+    
+store:
+  replicaCount: 1
+  logLevel: info
+  # (per instance) local cache
+  dataPvc:
+    storageClassName: local-path
+    size: 4Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+
+compactor:
+  logLevel: info
+  retentionResolution:
+    'raw': 9w 
+    '5m': 1y
+    '1h': 5y
+  cronjob:
+    suspend: false
+    schedule: '30 01 * * ?'
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
