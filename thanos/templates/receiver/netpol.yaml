@@ -1,0 +1,57 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $fullname := include "thanos.fullname" . }}
+
+{{- if .Values.receiver.netpol.enabled }}
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-receiver-allow-grpc-internal-1" $fullname }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "thanos.selectorLabelsForReceiver" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    # allow from receivers in same hashring
+    - podSelector:
+        matchLabels:
+          {{- include "thanos.selectorLabelsForReceiver" . | nindent 10 }}
+    # allow from querier in same release
+    - podSelector:
+        matchLabels:
+          {{- include "thanos.selectorLabelsForQuerier" . | nindent 10 }}
+    ports:
+    - port: grpc
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ printf "%s-receiver-allow-prometheus" $fullname }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "thanos.selectorLabelsForReceiver" . | nindent 6 }}
+  policyTypes:
+  - Ingress
+  ingress:
+  # allow from Prometheus
+  {{- with .Values.prometheus }}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: {{ .namespace }}
+      podSelector:
+        matchLabels:
+          {{- toYaml .labelSelector | nindent 10 }} 
+    ports:
+    - port: remote-write
+    - port: http # for scraping metrics endpoint
+   {{- end }}{{/* with .Values.prometheus */}}
+
+{{- end }}{{/* if .Values.receiver.netpol.enabled */}}
