@@ -38,6 +38,12 @@ securityContext:
 objstore:
   secretName: ~
 
+# pointer to existing Prometheus deployment
+prometheus:
+  namespace: monitoring
+  labelSelector:
+    app.kubernetes.io/name: prometheus
+
 receiver:
   replicaCount: 1
   replicationFactor: 1
@@ -46,7 +52,8 @@ receiver:
     size: 24Gi
   logLevel: info
   # additional labels to attach to received metrics
-  metricLabels: []
+  metricLabels: 
+    []
     #foo: bar
   # configuration for receiver-local TSDB
   tsdb:
@@ -58,6 +65,8 @@ receiver:
     requests:
       cpu: 500m
       memory: 512Mi
+  netpol:
+    enabled: false
 
 querier:
   replicaCount: 1
@@ -79,7 +88,14 @@ querier:
       # use htpasswd format under "auth" key
       #secretName: thanos-1-basic-auth
     #whitelistRange: 192.168.5.0/24
-    
+  netpol:
+    enabled: false
+    ingressController:
+      namespace: ingress-nginx
+      labelSelector:
+         app.kubernetes.io/name: ingress-nginx 
+         app.kubernetes.io/component: controller
+
 store:
   replicaCount: 1
   logLevel: info
@@ -94,7 +110,9 @@ store:
     requests:
       cpu: 500m
       memory: 256Mi
-
+  netpol:
+    enabled: false
+    
 compactor:
   logLevel: info
   retentionResolution:
