@@ -1,0 +1,94 @@
+# vim: set filetype=helm:
+
+{{- $dataPvcName := "" }}
+{{- $subcommand := .Values.subcommand }}
+{{- $subcommandArgs := list }}
+{{- if eq $subcommand "upload-blocks" }}
+  {{- $dataPvcName = .Values.uploadBlocks.dataPvc.name }}
+  {{- $dataDir := printf "/snapshots/%s" .Values.uploadBlocks.snapshotName }}
+  {{- $subcommandArgs = concat (list (printf "--path=%s" $dataDir) "--label=receive_replica=\"thanos-bucket\"") .Values.uploadBlocks.extraArgs }}
+{{- else if eq $subcommand "ls" }}
+  {{- $subcommandArgs = .Values.ls.extraArgs }}
+{{- else if eq $subcommand "inspect" }}
+  {{- $subcommandArgs = .Values.inspect.extraArgs }}
+{{- else if eq $subcommand "cleanup" }}
+  {{- $subcommandArgs = .Values.cleanup.extraArgs }}
+{{- end }}{{/* if eq .Values.command */}}
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "thanos-bucket.jobName" . }}
+  labels:
+    {{- include "thanos-bucket.labels" . | nindent 4 }}
+spec:  
+  backoffLimit: 1
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "thanos-bucket.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "thanos-bucket.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+      {{- if $dataPvcName }}
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ $dataPvcName }}
+      {{- end }}    
+      - name: bucket-config
+        secret:
+          secretName: {{ include "thanos-bucket.objstoreSecretName" . }}
+      containers:
+      - name: "thanos-bucket"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command:
+        args: 
+        - tools
+        - bucket
+        - --objstore.config-file=/config/bucket-config.yaml
+        - {{ $subcommand }}
+        {{- toYaml $subcommandArgs | nindent 8 }}
+        env:
+          []
+        volumeMounts:
+        - name: bucket-config
+          mountPath: /config/bucket-config.yaml
+          subPath: objstore.yml
+          readOnly: true
+        {{- if $dataPvcName }}
+        - name: data
+          mountPath: /snapshots
+          subPath: prometheus-db/snapshots
+          # NOTE: cannot mount readonly as thanos needs to write some metadata
+          readOnly: false 
+        {{- end }}  
+        resources: {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
