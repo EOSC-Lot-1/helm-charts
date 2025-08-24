@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: v0.39.2
+description: Run offline tasks on Thanos object storage
+name: thanos-bucket
+type: application
+version: 0.1.0
