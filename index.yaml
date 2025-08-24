@@ -3,7 +3,7 @@ entries:
   download-from-github-repo:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-08-18T23:16:38.15329368+03:00"
+    created: "2025-08-24T10:32:33.112780712+03:00"
     description: Download a file from a github repo
     digest: dd3d729ec55ca315fcd79ce4d1d742fc232be6318943d7e59571f60e4529f641
     name: download-from-github-repo
@@ -14,7 +14,7 @@ entries:
   elasticdump-load:
   - apiVersion: v2
     appVersion: v6.110.0
-    created: "2025-08-18T23:16:38.153677327+03:00"
+    created: "2025-08-24T10:32:33.113157254+03:00"
     description: A Helm chart for loading an index from an Elasticdump dump
     digest: cf37d88c224f7a920e8f6ea1c077b52bf70cbfd09398e5de55db0c43e2f34444
     name: elasticdump-load
@@ -25,7 +25,7 @@ entries:
   flyway:
   - apiVersion: v2
     appVersion: "9"
-    created: "2025-08-18T23:16:38.156377136+03:00"
+    created: "2025-08-24T10:32:33.115939704+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: 5a009c846e7634bcd8870b53b8c82f5c98aefbf865e7a0d43fc18ebe169795ed
     name: flyway
@@ -35,7 +35,7 @@ entries:
     version: 0.6.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2025-08-18T23:16:38.155916288+03:00"
+    created: "2025-08-24T10:32:33.1154694+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: ffb8e68310fa094c2a278528bdf5cbf44ff3a3f443efdc35bdfd6f9626474231
     name: flyway
@@ -45,7 +45,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2025-08-18T23:16:38.155447103+03:00"
+    created: "2025-08-24T10:32:33.115025875+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: 87d4cef01a06d6d5dcaaf074b6839836cab898434ab86132680d9603a16899ea
     name: flyway
@@ -55,7 +55,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2025-08-18T23:16:38.155008145+03:00"
+    created: "2025-08-24T10:32:33.114594573+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: d9bb597cd1bbaa9ee121ef3c8f4c278234104f4ca3d7eb1294e968205a428b96
     name: flyway
@@ -65,7 +65,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2025-08-18T23:16:38.154563817+03:00"
+    created: "2025-08-24T10:32:33.114133399+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: e5f6942146673458d7a74bd254514fa14221a3b8ce878d582422720285a6504c
     name: flyway
@@ -75,7 +75,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: "9"
-    created: "2025-08-18T23:16:38.154101107+03:00"
+    created: "2025-08-24T10:32:33.113590678+03:00"
     description: A Helm chart for applying database migrations with Flyway
     digest: 19677698588891ac0318e211776aa1be66a63b196637b082d79fab5176fc37ee
     name: flyway
@@ -86,7 +86,7 @@ entries:
   mariadb-backup:
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2025-08-18T23:16:38.158482283+03:00"
+    created: "2025-08-24T10:32:33.117585027+03:00"
     description: Backup a MariaDB database
     digest: 41e7201f740f1c63c7aa178e32db1fc113e52ebeef9fb9644611232961ecef90
     name: mariadb-backup
@@ -96,7 +96,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2025-08-18T23:16:38.157572008+03:00"
+    created: "2025-08-24T10:32:33.117122905+03:00"
     description: Backup a MariaDB database
     digest: c2eb694dd3bfca14970bbe32d7fc7540c325b6f0cdfdaf26e29258f3ed6e57f3
     name: mariadb-backup
@@ -106,7 +106,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2025-08-18T23:16:38.157155423+03:00"
+    created: "2025-08-24T10:32:33.116708463+03:00"
     description: Backup a MariaDB database
     digest: 93f57d857b782092abeb9695dcd2ec504d6a813ee272b00114ba3e0edd8503a4
     name: mariadb-backup
@@ -116,7 +116,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2025-08-18T23:16:38.156737367+03:00"
+    created: "2025-08-24T10:32:33.116306312+03:00"
     description: Backup a MariaDB database
     digest: e250a43f1384116a45d72ddc15950805bf0bd65fe3f8a6b176ef664105d705b7
     name: mariadb-backup
@@ -127,7 +127,7 @@ entries:
   mariadb-run-script:
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2025-08-18T23:16:38.160002774+03:00"
+    created: "2025-08-24T10:32:33.118315449+03:00"
     description: Run an SQL script on a MariaDB database
     digest: 724fd246ff4bc3195c6a25cf687b7f2dfcea1c642a9be4bb2c4e7860409c3282
     name: mariadb-run-script
@@ -137,7 +137,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "10.11"
-    created: "2025-08-18T23:16:38.159563933+03:00"
+    created: "2025-08-24T10:32:33.117944477+03:00"
     description: Run an SQL script on a MariaDB database
     digest: 23c2e988118cfd5f834742d6c0eda66273c1ecfd3fb11f74c5b7a967a3af0e76
     name: mariadb-run-script
@@ -148,7 +148,7 @@ entries:
   msmtp:
   - apiVersion: v2
     appVersion: "1.8"
-    created: "2025-08-18T23:16:38.161238358+03:00"
+    created: "2025-08-24T10:32:33.120526597+03:00"
     description: A Helm chart for sending email with msmtp
     digest: 5ef5a344f03ab241ea0dd0287ae25604709070e813d81e69bbb4e3451ab4d392
     name: msmtp
@@ -158,7 +158,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "1.8"
-    created: "2025-08-18T23:16:38.160835069+03:00"
+    created: "2025-08-24T10:32:33.120071341+03:00"
     description: A Helm chart for sending email with msmtp
     digest: fa97a99f9f8c69f9745ec0c04e69ad9b3f5a0f3fe7ae14dcb2cc7e987d314a85
     name: msmtp
@@ -168,7 +168,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: "1.8"
-    created: "2025-08-18T23:16:38.160393612+03:00"
+    created: "2025-08-24T10:32:33.118719386+03:00"
     description: A Helm chart for sending email with msmtp
     digest: 3824ff41618e6c6631d9a9078048fb9e9a6060943ed8cd603dd313da2014cb03
     name: msmtp
@@ -179,7 +179,7 @@ entries:
   postgresql-backup:
   - apiVersion: v2
     appVersion: "15.7"
-    created: "2025-08-18T23:16:38.163093106+03:00"
+    created: "2025-08-24T10:32:33.122236223+03:00"
     description: Backup a Postgresql database
     digest: 851ff101f52aac56504974e1c36ae22bf6fdc8947a9e66b2145c7d44d1af6d0d
     name: postgresql-backup
@@ -189,7 +189,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: "15.7"
-    created: "2025-08-18T23:16:38.162591673+03:00"
+    created: "2025-08-24T10:32:33.121832887+03:00"
     description: Backup a Postgresql database
     digest: 3cea33b11597b9748db2e3664b39f7cb50cd7ad1678ebdda5aa8bd4fd1efcf0f
     name: postgresql-backup
@@ -199,7 +199,7 @@ entries:
     version: 0.4.1
   - apiVersion: v2
     appVersion: "15.7"
-    created: "2025-08-18T23:16:38.16209703+03:00"
+    created: "2025-08-24T10:32:33.121425904+03:00"
     description: Backup a Postgresql database
     digest: 7f357b0be4ed576b78d514f96a11c646af8bad7f70ba6c92313513bc451a0933
     name: postgresql-backup
@@ -209,7 +209,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: "15.7"
-    created: "2025-08-18T23:16:38.161649713+03:00"
+    created: "2025-08-24T10:32:33.120966169+03:00"
     description: Backup a Postgresql database
     digest: 929f9beca7467272eff9b03e57a9be8b2f00af2e94f968b912ce7c4783b890ca
     name: postgresql-backup
@@ -220,7 +220,7 @@ entries:
   postgresql-cluster:
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.174236879+03:00"
+    created: "2025-08-24T10:32:33.132843105+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 97a8abf093961021d45a3af1cc01662c99431f1a69d6695f029b897d0ac49ed2
     name: postgresql-cluster
@@ -230,7 +230,7 @@ entries:
     version: 0.5.1
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.173012335+03:00"
+    created: "2025-08-24T10:32:33.131564916+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 4829883e5455117033edce21293675332442b46f358a7b2c5614c1a7824cf73a
     name: postgresql-cluster
@@ -240,7 +240,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.17175391+03:00"
+    created: "2025-08-24T10:32:33.13035032+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 6cf4780670e71dcee4c14f75a3ab26dc97457189dc6cdf20a1db532255196b6a
     name: postgresql-cluster
@@ -250,7 +250,7 @@ entries:
     version: 0.4.7
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.170492423+03:00"
+    created: "2025-08-24T10:32:33.129123348+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: bef1aa8535d4c146efcda9f8096985192cd966b0169622d1f0b43ca2afe83383
     name: postgresql-cluster
@@ -260,7 +260,7 @@ entries:
     version: 0.4.5
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.168951448+03:00"
+    created: "2025-08-24T10:32:33.126946681+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: ee1f3998fc5feee66895866ebff26499755552e29ecce7ecf47b36f39ae2c615
     name: postgresql-cluster
@@ -270,7 +270,7 @@ entries:
     version: 0.4.4
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.166661776+03:00"
+    created: "2025-08-24T10:32:33.125774897+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 3d67a16f9a2512bd3c599fc40fad01af730ff649d4998d09166303df22e5015a
     name: postgresql-cluster
@@ -280,7 +280,7 @@ entries:
     version: 0.4.3
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.16548804+03:00"
+    created: "2025-08-24T10:32:33.124593981+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: 49737e243bf5b60e8ceca5440c066a2b2b6544fab00cad6ed50e30114db4b2e9
     name: postgresql-cluster
@@ -290,7 +290,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: "15"
-    created: "2025-08-18T23:16:38.16432185+03:00"
+    created: "2025-08-24T10:32:33.123392401+03:00"
     description: A Helm chart for a PostgreSQL master/standby cluster
     digest: c55fb13ab39463edd964673da582be23a485cffc53567f280eab0467661db1ce
     name: postgresql-cluster
@@ -301,7 +301,7 @@ entries:
   postgresql-verify-backup:
   - apiVersion: v2
     appVersion: "15.7"
-    created: "2025-08-18T23:16:38.174618084+03:00"
+    created: "2025-08-24T10:32:33.133224186+03:00"
     description: Verify a PostgreSQL backup stored in an S3 bucket
     digest: c80ff255e8fd8f5c9c0b15766fed18a8c7fe7048f0f6ee38ad0661176dfe34b9
     name: postgresql-verify-backup
@@ -312,7 +312,7 @@ entries:
   rabbitmq:
   - apiVersion: v2
     appVersion: "3.13"
-    created: "2025-08-18T23:16:38.176416285+03:00"
+    created: "2025-08-24T10:32:33.134953713+03:00"
     description: A Helm chart for a RabbitMQ cluster
     digest: 7053fa09dea4cd8db6f0e0bd1224de7b6273593cbd3b3ee3adc5270bb7112267
     name: rabbitmq
@@ -322,7 +322,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: "3.13"
-    created: "2025-08-18T23:16:38.175962938+03:00"
+    created: "2025-08-24T10:32:33.134505753+03:00"
     description: A Helm chart for a RabbitMQ cluster
     digest: d319beee01857c39f76b01ff8851d7e71b6cb35a566d7d0d808fb90abd1ae521
     name: rabbitmq
@@ -332,7 +332,7 @@ entries:
     version: 0.2.2
   - apiVersion: v2
     appVersion: "3.13"
-    created: "2025-08-18T23:16:38.175486772+03:00"
+    created: "2025-08-24T10:32:33.134075863+03:00"
     description: A Helm chart for a RabbitMQ cluster
     digest: c3e3d40a949de7ef009c8adee4bcecc1bbb56ce2bbe1c2bdc918b45727e19206
     name: rabbitmq
@@ -342,7 +342,7 @@ entries:
     version: 0.2.1
   - apiVersion: v2
     appVersion: "3.13"
-    created: "2025-08-18T23:16:38.175056+03:00"
+    created: "2025-08-24T10:32:33.133650557+03:00"
     description: A Helm chart for a RabbitMQ cluster
     digest: 7f2ab94c690a92fe259596aa2623a61ac36242fc69d76fcd56d8f117ae502467
     name: rabbitmq
@@ -353,7 +353,7 @@ entries:
   rabbitmq-import-definitions:
   - apiVersion: v2
     appVersion: "3"
-    created: "2025-08-18T23:16:38.177085863+03:00"
+    created: "2025-08-24T10:32:33.135271303+03:00"
     description: A Helm chart for importing definitions into a RabbitMQ vhost
     digest: f1b95a7e5da722f636f65b20aa550c96336dbc90360dcfa9dccdbdb5c768e690
     name: rabbitmq-import-definitions
@@ -364,7 +364,7 @@ entries:
   rabbitmq-user:
   - apiVersion: v2
     appVersion: "3"
-    created: "2025-08-18T23:16:38.178057509+03:00"
+    created: "2025-08-24T10:32:33.135597086+03:00"
     description: A Helm chart for setting up a user account in a RabbitMQ cluster
     digest: 33d85f649fb7eff3b5c28b293f747c94b91e881eccc1ac9dbfeb43ada641bb45
     name: rabbitmq-user
@@ -375,7 +375,7 @@ entries:
   rsyslog:
   - apiVersion: v2
     appVersion: 8.2404.0
-    created: "2025-08-18T23:16:38.178540707+03:00"
+    created: "2025-08-24T10:32:33.136038524+03:00"
     description: A Helm chart for Rsyslog
     digest: 1b358f8157a6dd1a6e5bcd0604510579e4176eb5606498c3579914296020716b
     name: rsyslog
@@ -386,7 +386,7 @@ entries:
   s3cmd:
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-08-18T23:16:38.180319845+03:00"
+    created: "2025-08-24T10:32:33.138702571+03:00"
     description: A Helm chart for running an s3cmd get/put command
     digest: ece0704f34b692aefa2a4ce72bc4c2a047551643368f69ec1cf8aca7b616ab7f
     name: s3cmd
@@ -396,7 +396,7 @@ entries:
     version: 0.3.2
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-08-18T23:16:38.179905642+03:00"
+    created: "2025-08-24T10:32:33.1382319+03:00"
     description: A Helm chart for running an s3cmd get/put command
     digest: cfbab2130933d62907fd86b79ddea4ee5140485847640cb744e81886fc82585c
     name: s3cmd
@@ -406,7 +406,7 @@ entries:
     version: 0.3.1
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-08-18T23:16:38.179481288+03:00"
+    created: "2025-08-24T10:32:33.137350017+03:00"
     description: A Helm chart for running an s3cmd get/put command
     digest: 374dd0812ea3de8e7936c8c273453bdf700c1f90afdbfc0356d706a7599129fb
     name: s3cmd
@@ -416,7 +416,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.1.0
-    created: "2025-08-18T23:16:38.178961852+03:00"
+    created: "2025-08-24T10:32:33.136397784+03:00"
     description: A Helm chart for running an s3cmd get/put command
     digest: 18e5884e8d3bd22f0ff68e8490ab3103148040133946c0fea5b65cbab184abae
     name: s3cmd
@@ -427,18 +427,29 @@ entries:
   thanos:
   - apiVersion: v2
     appVersion: "0.39"
-    created: "2025-08-18T23:16:38.181034448+03:00"
+    created: "2025-08-24T10:32:33.13943383+03:00"
     description: A Helm chart for Thanos
-    digest: c9f43697815b24d736214f25d542e7f9f42af535fb7f4107b8397ffe586d15d5
+    digest: 3e2059d8e4525198096ba770d6895af31fd18445c063a069e7501f89155e4de7
     name: thanos
     type: application
     urls:
     - thanos-0.2.0.tgz
     version: 0.2.0
+  thanos-bucket:
+  - apiVersion: v2
+    appVersion: v0.39.2
+    created: "2025-08-24T10:32:33.139806608+03:00"
+    description: Run offline tasks on Thanos object storage
+    digest: 0541cad1a226c52cebe29f57d801bd13d3415e1f5f5915af65074fe9464be6f6
+    name: thanos-bucket
+    type: application
+    urls:
+    - thanos-bucket-0.1.0.tgz
+    version: 0.1.0
   untar:
   - apiVersion: v2
     appVersion: "1.34"
-    created: "2025-08-18T23:16:38.181377065+03:00"
+    created: "2025-08-24T10:32:33.140170582+03:00"
     description: A Helm chart for unpacking a TAR archive into a PV
     digest: eeb24b55473976055219c536da1255cd72dc8eac42e7da0662328f57378f1e90
     name: untar
@@ -446,4 +457,4 @@ entries:
     urls:
     - untar-0.1.0.tgz
     version: 0.1.0
-generated: "2025-08-18T23:16:38.152712228+03:00"
+generated: "2025-08-24T10:32:33.112225725+03:00"
