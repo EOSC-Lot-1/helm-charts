@@ -1,0 +1,29 @@
+# Number of Matomo replicas
+replicaCount: 1
+
+# Matomo image
+image:
+  repository: matomo        # official image
+  tag: 5.1.2-apache        # choose your version
+  pullPolicy: IfNotPresent
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Persistence (Helm will create the PVC)
+persistence:
+  enabled: true
+  size: 8Gi
+  storageClass: local-path
+
+# External MariaDB
+externalDatabase:
+  host: matomo-mariadb
+  port: 3306
+  user: bn_matomo
+  database: bitnami_matomo
+  passwordSecret: matomo-mariadb-password
+  passwordSecretKey: db-password
+

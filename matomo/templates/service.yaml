@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "matomo.fullname" . }}
+  labels:
+    app.kubernetes.io/name: matomo
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 80
+      name: http
+  selector:
+    app.kubernetes.io/name: matomo
+
