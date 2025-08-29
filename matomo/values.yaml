@@ -1,24 +1,21 @@
-# Number of Matomo replicas
 replicaCount: 1
 
-# Matomo image
 image:
-  repository: matomo        # official image
-  tag: 5.1.2-apache        # choose your version
+  repository: matomo
+  tag: 5.1.2-apache
   pullPolicy: IfNotPresent
 
-# Service configuration
 service:
   type: ClusterIP
-  port: 80
+  ports:
+    http: 80
+    https: 443
 
-# Persistence (Helm will create the PVC)
-persistence:
-  enabled: true
-  size: 8Gi
-  storageClass: local-path
+# We are not using embedded MariaDB
+mariadb:
+  enabled: false
 
-# External MariaDB
+# External database
 externalDatabase:
   host: matomo-mariadb
   port: 3306
@@ -26,4 +23,42 @@ externalDatabase:
   database: bitnami_matomo
   passwordSecret: matomo-mariadb-password
   passwordSecretKey: db-password
+
+# Security
+podSecurityContext:
+  enabled: true
+  fsGroup: 1001
+
+containerSecurityContext:
+  enabled: true
+  runAsUser: 1001
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: ["ALL"]
+  seccompProfile:
+    type: "RuntimeDefault"
+
+# Probes
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 5
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  path: /matomo.php
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 1
+  failureThreshold: 5
+  successThreshold: 1
+
+# Use existing PVC
+persistence:
+  enabled: false
+  existingClaim: matomo-data
 

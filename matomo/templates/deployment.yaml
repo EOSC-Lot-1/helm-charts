@@ -8,12 +8,14 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: matomo
+      app.kubernetes.io/name: {{ include "matomo.fullname" . }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: matomo
+        app.kubernetes.io/name: {{ include "matomo.fullname" . }}
     spec:
+      securityContext:
+        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
       containers:
         - name: matomo
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -34,11 +36,19 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.externalDatabase.passwordSecret }}
                   key: {{ .Values.externalDatabase.passwordSecretKey }}
+          securityContext:
+            runAsUser: {{ .Values.containerSecurityContext.runAsUser }}
+            runAsNonRoot: {{ .Values.containerSecurityContext.runAsNonRoot }}
+            allowPrivilegeEscalation: {{ .Values.containerSecurityContext.allowPrivilegeEscalation }}
+            capabilities:
+              drop: {{ .Values.containerSecurityContext.capabilities.drop }}
+            seccompProfile:
+              type: {{ .Values.containerSecurityContext.seccompProfile.type }}
           volumeMounts:
             - name: matomo-data
-              mountPath: /var/www/html/config
+              mountPath: /var/www/html
       volumes:
         - name: matomo-data
           persistentVolumeClaim:
-            claimName: {{ include "matomo.fullname" . }}
+            claimName: {{ .Values.persistence.existingClaim }}
 

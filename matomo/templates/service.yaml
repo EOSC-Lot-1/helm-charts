@@ -6,10 +6,13 @@ metadata:
     app.kubernetes.io/name: matomo
 spec:
   type: {{ .Values.service.type }}
-  ports:
-    - port: {{ .Values.service.port }}
-      targetPort: 80
-      name: http
   selector:
-    app.kubernetes.io/name: matomo
+    app.kubernetes.io/name: {{ include "matomo.fullname" . }}
+  ports:
+    - name: http
+      port: 8080          # old service port
+      targetPort: 80      # container port
+    - name: https
+      port: 8443          # optional HTTPS if needed
+      targetPort: 443
 
