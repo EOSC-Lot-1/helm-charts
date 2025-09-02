@@ -50,6 +50,11 @@ spec:
         securityContext:
           {{- toYaml .Values.checkout.securityContext | nindent 10 }}
         env:
+        - name: HOME
+          value: {{ .Values.checkout.homeDir }}
+        - name: GIT_CONFIG_GLOBAL
+          value: >-
+            $(HOME)/config/gitconfig
         - name: REPO_URL
           value: {{ .Values.checkout.repository.url }}
         - name: REPO_BRANCH
@@ -61,7 +66,9 @@ spec:
           value: {{ .Values.checkout.homeDir }}/.ssh/key
         - name: GIT_SSH_COMMAND
           value: >-
-            ssh -i $(SSH_KEY_FILE) -o IdentitiesOnly=yes
+            ssh -i $(SSH_KEY_FILE)
+            -o IdentitiesOnly=yes
+            -o UserKnownHostsFile=$(HOME)/.ssh/known_hosts
         {{- end }}{{/* ssh repo URL */}}
         command:
         - sh
@@ -77,6 +84,10 @@ spec:
         volumeMounts:
         - name: work
           mountPath: {{ .Values.checkout.homeDir }}/code
+          subPath: code
+        - name: work
+          mountPath: {{ .Values.checkout.homeDir }}/config
+          subPath: config
         {{- if not (hasPrefix "https://" .Values.checkout.repository.url) }}
         - name: ssh-key
           mountPath: {{ .Values.checkout.homeDir }}/.ssh/key
@@ -105,7 +116,7 @@ spec:
         volumeMounts:
         - name: work
           mountPath: /flyway/sql
-          subPathExpr: $(PATH_TO_CHECKOUT)
+          subPathExpr: code/$(PATH_TO_CHECKOUT)
       containers:
       - name: flyway
         image: "{{ .Values.flyway.image.repository }}:{{ .Values.flyway.image.tag }}"
@@ -137,7 +148,7 @@ spec:
         volumeMounts:
         - name: work
           mountPath: /flyway/sql
-          subPathExpr: $(PATH_TO_CHECKOUT)
+          subPathExpr: code/$(PATH_TO_CHECKOUT)
           readOnly: true
         resources: {{- toYaml .Values.resources | nindent 10 }}
       {{- with .Values.nodeSelector }}

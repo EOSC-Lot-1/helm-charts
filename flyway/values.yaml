@@ -35,19 +35,19 @@ affinity: {}
 
 checkout:
   image: 
-    repository: bitnami/git
+    repository: alpine/git
     pullPolicy: IfNotPresent
-    tag: 2.35.3
+    tag: v2.49.1
   securityContext:
-    # uid/gid of bitnami user
-    runAsUser: 1000
-    runAsGroup: 1000
+    # uid/gid of guest user
+    runAsUser: 405
+    runAsGroup: 100
     runAsNonRoot: true
     capabilities:
       drop: [ 'ALL' ]
     allowPrivilegeEscalation: false  
-  # home of bitnami user
-  homeDir: /home/bitnami
+  # assign a temporary home for "guest" user
+  homeDir: /git
   # name of the secret holding the SSH key (as "ssh-privatekey") for the Git repository
   sshKey: 
     secretName: ssh-key
