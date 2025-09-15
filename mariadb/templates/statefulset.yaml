@@ -1,0 +1,253 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $fullname := (include "mariadb.fullname" .) }}
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $fullname }}
+  labels:
+    {{- include "mariadb.labels" . | nindent 4 }}
+spec:
+  # number of replicas hardcoded to 1; scaling not (yet) supported for this statefulset
+  replicas: 1
+  serviceName: {{ $fullname }}
+  selector:
+    matchLabels:
+      {{- include "mariadb.selectorLabels" . | nindent 6 }}
+  volumeClaimTemplates:
+  {{- with .Values.mariadb.dataPvc }}
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: {{ .storageClassName }}
+      resources:
+        requests:
+          storage: {{ .size }}
+  {{- end }}{{/* with .Values.mariadb.dataPvc */}}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "mariadb.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      volumes:
+      - name: password
+        secret:
+          secretName: {{ .Values.mariadb.password.secretName | default (printf "%s-password" $fullname) }}
+          defaultMode: 0640
+      - name: monitor-password
+        secret:
+          secretName: {{ .Values.mariadb.monitorPassword.secretName | default (printf "%s-monitor-password" $fullname) }}
+          defaultMode: 0640
+      - name: root-password
+        secret:
+          secretName: {{ .Values.mariadb.rootPassword.secretName | default (printf "%s-root-password" $fullname) }}
+          defaultMode: 0640
+      {{- with .Values.mariadb.initDataFrom }}
+      {{- if or .volume (or .secret .configMap) }}
+      - name: init-scripts
+        {{- if .configMap }}
+        configMap:
+          name: {{ .configMap.name }}
+        {{- else if .secret }}
+        secret:
+          secretName: {{ .secret.name }}
+          defaultMode: 0640
+        {{- else if .volume }}
+        persistentVolumeClaim:
+          claimName: {{ .volume.pvcName }}
+        {{- end }}
+      {{- end }}
+      {{- end }}{{/* with .Values.mariadb.initDataFrom */}}
+
+      containers:
+      -
+        name: mariadb
+        {{- with .Values.mariadb.image }}
+        image: "{{ .repository }}:{{ .tag | default $.Chart.AppVersion }}"
+        imagePullPolicy: {{ .pullPolicy }}
+        {{- end }}{{/* with .Values.mariadb.image */}}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        - name: MARIADB_USER
+          value: {{ .Values.mariadb.user }}
+        - name: MARIADB_PASSWORD_FILE
+          value: /secrets/password
+        - name: MARIADB_DATABASE
+          value: {{ .Values.mariadb.databaseName }}
+        - name: MARIADB_ROOT_PASSWORD_FILE
+          value: /secrets/root-password
+        args:
+          {{- toYaml .Values.mariadb.args | nindent 10 }}
+        ports:
+        - name: mariadb
+          containerPort: 3306
+          protocol: TCP
+        livenessProbe: ~
+        readinessProbe: ~
+        resources:
+          {{- toYaml .Values.mariadb.resources | nindent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+          subPath: mariadb-data
+        - name: data
+          mountPath: /docker-entrypoint-initdb.d
+          subPath: init-scripts
+          readOnly: true
+        - name: password
+          mountPath: /secrets/password
+          subPath: password
+          readOnly: true
+        - name: root-password
+          mountPath: /secrets/root-password
+          subPath: password
+          readOnly: true
+      {{- if .Values.prometheusExporter.enabled }}
+      -
+        name: exporter
+        {{- with .Values.prometheusExporter.image }}
+        image: "{{ .repository }}:{{ .tag }}"
+        imagePullPolicy: {{ .pullPolicy }}
+        {{- end }}{{/* with .Values.prometheusExporter.image */}}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        args:
+          {{- toYaml .Values.prometheusExporter.args | nindent 10 }}
+        workingDir: /work
+        ports:
+        - name: metrics
+          containerPort: 9104
+        volumeMounts:
+        - name: data
+          mountPath: /work
+          subPath: exporter
+        resources:
+          {{- toYaml .Values.prometheusExporter.resources | nindent 10 }}
+      {{- end }}{{/* if .Values.prometheusExporter.enabled */}}
+
+      initContainers:
+      -
+        name: generate-mycnf-for-exporter
+        image: busybox:1
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command:
+        - sh
+        - -xue
+        - -c
+        - |
+          read password </secrets/monitor-password || true
+          cat > .my.cnf <<EOD
+          [client]
+          user = monitor
+          password = ${password}
+          EOD
+        workingDir: /work
+        volumeMounts:
+        - name: monitor-password
+          mountPath: /secrets/monitor-password
+          subPath: password
+          readOnly: true
+        - name: data
+          mountPath: /work
+          subPath: exporter
+      -
+        name: copy-init-scripts
+        image: busybox:1
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        workingDir: /data-in
+        command:
+        - sh
+        - -xue
+        env:
+        {{- with .Values.mariadb.initDataFrom }}
+        {{- if .url }}
+        - name: _DOWNLOAD_URL
+          valueFrom:
+            secretKeyRef: 
+              {{- toYaml .url.secretKeyRef | nindent 14 }}
+        {{- end }}{{/* if .url */}}
+        args:
+        - -c
+        {{- if or .volume (or .secret .configMap) }}
+        - >-
+          cp -vn *.sql *.sql.gz /data-out/
+        {{- else if .url }}
+        - |-
+          outputDir=/data-out flagFile=${outputDir}/.downloaded-and-extracted
+          [[ -f ${flagFile} ]] || { wget -O- "${_DOWNLOAD_URL}" | tar xzv -C ${outputDir}; }
+          touch ${flagFile}
+        {{- else }}
+        - >-
+          : # noop
+        {{- end }}{{/* if */}}
+        volumeMounts:
+        - name: data
+          mountPath: /data-out
+          subPath: init-scripts
+        {{- if or .volume (or .secret .configMap) }}
+        - name: init-scripts
+          mountPath: /data-in
+          {{- with .volume }}
+          subPath: {{ .subPath | squote }}
+          {{- end }}
+          readOnly: true
+        {{- end }}
+        {{- end }}{{/* with .Values.mariadb.initDataFrom */}}
+      -
+        name: generate-init-scripts-for-monitoring
+        image: busybox:1
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command:
+        - sh
+        - -xue
+        - -c
+        - |
+          grep -Eq -e '^[[:alnum:]]+$' /secrets/monitor-password
+          read password </secrets/monitor-password || true # ignore nonzero exit code on EOF
+          cat >/docker-entrypoint-initdb.d/setup-user-for-monitoring.sql <<EOD
+          CREATE USER 'monitor'@'127.0.0.1' IDENTIFIED BY '${password}';
+          GRANT PROCESS, REPLICATION CLIENT, SLAVE MONITOR, SELECT ON *.* TO 'monitor'@'127.0.0.1';
+          EOD
+        volumeMounts:
+        - name: data
+          mountPath: /docker-entrypoint-initdb.d
+          subPath: init-scripts
+        - name: monitor-password
+          mountPath: /secrets/monitor-password
+          subPath: password
+          readOnly: true
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

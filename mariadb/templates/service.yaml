@@ -1,0 +1,23 @@
+{{/* vim: set syntax=helm: */}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mariadb.fullname" . }}
+  labels:
+    {{- include "mariadb.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: mariadb
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  {{- if .Values.prometheusExporter.enabled }}  
+  - name: metrics
+    port: 9104
+    protocol: TCP
+    targetPort: 9104
+  {{- end }}{{/* if .Values.prometheusExporter.enabled */}}  
+  selector:
+    {{- include "mariadb.selectorLabels" . | nindent 4 }}

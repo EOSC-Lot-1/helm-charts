@@ -1,0 +1,93 @@
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  # user "mysql" in mariadb:10
+  fsGroup: 999
+  runAsUser: 999
+  runAsGroup: 999
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  #readOnlyRootFilesystem: true
+  runAsNonRoot: true
+
+mariadb:
+  image:
+    repository: mariadb
+    pullPolicy: IfNotPresent
+    tag: "10.11"
+  
+  args:
+  - --max-connections=120 
+  
+  dataPvc:
+    storageClassName: local-path
+    size: 12Gi
+  
+  databaseName: app1
+  user: user1
+  password:
+    secretName: ~
+  
+  initDataFrom:
+    volume:
+      #pvcName: mariadb-initdata
+      #subPath: ~
+    # .. or
+    configMap:
+      #name: mariadb-initdata
+    # .. or
+    secret:
+      #name: mariadb-initdata
+    # .. or
+    url:
+      #secretKeyRef:
+      #  name: mariadb-initdata-download-url
+      #  key: downloadUrl
+  
+  rootPassword:
+    secretName: ~
+  monitorPassword:
+    secretName: ~  
+  
+  resources:
+    limits:
+      memory: 1024Mi
+      cpu: 1000m
+    requests:
+      memory: 256Mi
+      cpu: 200m
+
+prometheusExporter:
+  enabled: false
+  image:
+    repository: prom/mysqld-exporter
+    pullPolicy: IfNotPresent
+    tag: "v0.17.2"
+  args:
+  - --mysqld.address=127.0.0.1:3306
+  - --log.level=info
+  resources:
+    limits:
+      memory: 512Mi
+      cpu: 400m
+    requests:
+      memory: 128Mi
+      cpu: 200m
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
