@@ -101,8 +101,15 @@ spec:
         - name: mariadb
           containerPort: 3306
           protocol: TCP
-        livenessProbe: ~
-        readinessProbe: ~
+        readinessProbe:
+          exec:
+            command: 
+            - mysqladmin 
+            - --defaults-file=/var/lib/mysql/.root.my.cnf 
+            - ping 
+            - --local
+          initialDelaySeconds: 15
+          periodSeconds: 30
         resources:
           {{- toYaml .Values.mariadb.resources | nindent 10 }}
         volumeMounts:
@@ -146,6 +153,31 @@ spec:
 
       initContainers:
       -
+        name: generate-mycnf-for-mariadb
+        image: busybox:1
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        command:
+        - sh
+        - -xue
+        - -c
+        - |
+          read password </secrets/root-password || true
+          umask 077 && cat > .root.my.cnf <<EOD
+          [client]
+          user = root
+          password = ${password}
+          EOD
+        workingDir: /work
+        volumeMounts:
+        - name: root-password
+          mountPath: /secrets/root-password
+          subPath: password
+          readOnly: true
+        - name: data
+          mountPath: /work
+          subPath: mariadb-data
+      -
         name: generate-mycnf-for-exporter
         image: busybox:1
         securityContext:
@@ -156,7 +188,7 @@ spec:
         - -c
         - |
           read password </secrets/monitor-password || true
-          cat > .my.cnf <<EOD
+          umask 077 && cat > .my.cnf <<EOD
           [client]
           user = monitor
           password = ${password}
