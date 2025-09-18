@@ -1,0 +1,103 @@
+{{/* vim: set syntax=helm: */}}
+
+{{- $containerMemLimit := .Values.resources.limits.memory }}
+{{- $containerMemLimitBytes := mul (mul 1024 1024) ((hasSuffix "Mi" $containerMemLimit) | ternary (int (trimSuffix "Mi" $containerMemLimit)) (mul 1024 (int (trimSuffix "Gi" $containerMemLimit)))) -}}
+
+{{- $redisArgs := list "--save 60 1" "--maxmemory $(_MAX_MEMORY)" "--maxmemory-policy $(_MAX_MEMORY_POLICY)" -}}
+{{- if .Values.password -}}
+  {{- $redisArgs = append $redisArgs "--requirepass $(_PASSWORD)" -}}
+{{- end -}}{{/* if .Values.password */}}
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "redis.fullname" . }}
+  labels:
+    {{- include "redis.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "redis.selectorLabels" . | nindent 6 }}
+  serviceName: {{ include "redis.fullname" . }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      {{- with .Values.persistence.data }}
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: {{ .storageClassName }}
+      resources:
+        requests:
+          storage: {{ .volumeSize }}
+      {{- end }}{{/* with .Values.persistence */}}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "redis.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "redis.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+        env:
+        - name: _MAX_MEMORY
+          value: {{ div (mul $containerMemLimitBytes .Values.maxMemoryAsPercentageOfContainerLimit) 100 | squote }}
+        - name: _MAX_MEMORY_POLICY
+          value: {{ .Values.maxMemoryEvictionPolicy | default "noeviction" }}
+        {{- with .Values.password }}
+        - name: _PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .secretName }}
+              key: password
+        - name: REDISCLI_AUTH
+          value: $(_PASSWORD)
+        {{- end }}{{/* with .Values.password */}}
+        - name: REDIS_ARGS
+          value: {{ $redisArgs | join " " | squote }}
+        ports:
+        - containerPort: 6379
+          name: redis
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        livenessProbe: ~
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
