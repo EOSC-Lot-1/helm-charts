@@ -1,0 +1,60 @@
+image:
+  repository: redis/redis-stack-server
+  pullPolicy: IfNotPresent
+  tag: "6.2.6-v2"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsUser: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  runAsNonRoot: true
+  # readOnlyRootFilesystem: true
+  # runAsUser: 1000
+
+persistence:
+  data:
+    storageClassName: local-path
+    volumeSize: 2Gi
+
+password:
+  #secretName: redis-password
+
+resources: 
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 512Mi
+    cpu: 750m
+
+# https://redis.io/docs/latest/develop/reference/eviction/#maxmem
+maxMemoryAsPercentageOfContainerLimit: 95
+maxMemoryEvictionPolicy: noeviction
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
