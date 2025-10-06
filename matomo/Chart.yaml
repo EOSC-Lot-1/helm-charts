@@ -1,7 +1,7 @@
 apiVersion: v2
 name: matomo
-description: Minimal Matomo Helm chart using official image
+description: A minimal Matomo Helm chart using official image
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "5.1.2"
 
