@@ -7,24 +7,15 @@ image:
 
 service:
   type: ClusterIP
-  ports:
-    http: 80
-    https: 443
 
-# We are not using embedded MariaDB
-mariadb:
-  enabled: false
-
-# External database
 externalDatabase:
   host: matomo-mariadb
   port: 3306
-  user: bn_matomo
-  database: bitnami_matomo
+  user: matomo
+  database: matomo
   passwordSecret: matomo-mariadb-password
   passwordSecretKey: db-password
 
-# Security
 podSecurityContext:
   enabled: true
   fsGroup: 1001
@@ -37,28 +28,15 @@ containerSecurityContext:
   capabilities:
     drop: ["ALL"]
   seccompProfile:
-    type: "RuntimeDefault"
+    type: RuntimeDefault
 
-# Probes
-livenessProbe:
-  enabled: true
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 5
-  successThreshold: 1
-
-readinessProbe:
-  enabled: true
-  path: /matomo.php
-  initialDelaySeconds: 30
-  periodSeconds: 5
-  timeoutSeconds: 1
-  failureThreshold: 5
-  successThreshold: 1
-
-# Use existing PVC
 persistence:
-  enabled: false
   existingClaim: matomo-data
 
+resources:
+  limits:
+    memory: 1024Mi
+    cpu: 750m
+  requests:
+    memory: 256Mi
+    cpu: 250m
