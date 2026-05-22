@@ -52,13 +52,15 @@ spec:
         configMap:
           name: {{ .configMapName }}
       {{- end }}{{/* with .Values.rsyslog.config */}}
-      {{ toYaml .Values.extraVolumes | nindent 6 }}
+      {{- with .Values.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}{{/* with .Values.extraVolumes*/}}
       containers:
       - name: rsyslog
         securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
         {{- with .Values.rsyslog.image }}
-        imagePullPolicy: {{ .pullPolicy }} 
+        imagePullPolicy: {{ .pullPolicy }}
         image: "{{ .repository }}:{{ .tag }}"
         {{- end }}{{/* with .Values.rsyslog.image */}}
         env:
@@ -73,7 +75,9 @@ spec:
           subPath: {{ .key | default "rsyslog.conf" }}
           readOnly: true
         {{- end }}{{/* with .Values.rsyslog.config */}}
-        {{- toYaml .Values.rsyslog.extraVolumeMounts | nindent 8 }}
+        {{- with .Values.rsyslog.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}{{/* with .Values.rsyslog.extraVolumeMounts*/}}
         ports:
         - containerPort: 514
           protocol: TCP
