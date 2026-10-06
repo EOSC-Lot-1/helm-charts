@@ -5,6 +5,15 @@ Define the pod spec
 */}}
 {{- define "postgresql-backup.podSpec" -}}
 
+{{ $headerForTagging := "" }}
+{{- with .Values.backup.s3.taggingMap }}
+  {{- $pairs := list -}}
+    {{- range $k, $v := . -}}
+      {{- $pairs = append $pairs (printf "%s=%s" $k (toString $v | urlquery)) -}}
+    {{- end -}}
+  {{- $headerForTagging = printf "x-amz-tagging: %s" (join "&" $pairs) -}}
+{{- end }}{{/* with .Values.backup.s3.taggingMap */}}
+
 restartPolicy: Never
 {{- with .Values.imagePullSecrets }}
 imagePullSecrets:
@@ -107,7 +116,7 @@ initContainers:
   - name: OUTPUT_NAME
     value: $(_POD_ID).sql.gz
   - name: BASE_URL
-    value: {{ printf "s3://%s/%s" (.Values.backup.s3.bucket) (.Values.backup.s3.prefix | default "") }}
+    value: {{ printf "s3://%s/%s" (.Values.backup.s3.bucket) (.Values.backup.s3.prefix | trimSuffix "/") }}
   - name: OUTPUT_URL
     value: $(BASE_URL)/$(OUTPUT_NAME)
   command:
@@ -124,6 +133,10 @@ initContainers:
   - put
   - $(OUTPUT_NAME)
   - $(OUTPUT_URL)
+  {{- if $headerForTagging }}
+  - --add-header
+  - {{ $headerForTagging | quote }}
+  {{- end }}{{/* if $headerForTagging */}}
   workingDir: /work
   volumeMounts:
   - name: s3cmd-config
@@ -186,7 +199,7 @@ tolerations:
 
 
 {{/*
-Define the pod spec
+Define the job spec
 */}}
 {{- define "postgresql-backup.jobSpec" -}}
 
