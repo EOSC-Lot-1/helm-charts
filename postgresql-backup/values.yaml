@@ -55,9 +55,11 @@ backup:
     #fileName: backup.sql.gz
   # (optional) upload the backup file to an S3 bucket
   s3:
-    bucket: ~
-    #bucket: backups
-    #prefix: postgresql
+    bucket: backups
+    prefix: pg_dump/
+    #taggingMap: 
+    #  Key1: Value1
+    #  Key2: Value2
     ## for encryption to be supported, s3cmd must configure: gpg_{passphrase,command,encrypt,decrypt}
     #encrypt: false
   database:
