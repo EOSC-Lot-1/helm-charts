@@ -3,6 +3,11 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+extraVolumes: []
+#- secret:
+#    secretName: rsyslog-1-tls
+#  name: tls
+
 rsyslog:
   image:
     repository: ghcr.io/eosc-lot-1/rsyslog
@@ -11,6 +16,10 @@ rsyslog:
   config:
     #configMapName: rsyslog-1-config
     #key: rsyslog.conf
+  extraVolumeMounts: []
+  #- name: tls
+  #  mountPath: /etc/rsyslog/tls
+  #  readOnly: true
 
 logrotate:
   image:
@@ -47,9 +56,6 @@ securityContext:
   runAsNonRoot: true
   #readOnlyRootFilesystem: true
   #runAsUser: 1000
-
-service:
-  port: 514
 
 resources:
   limits:
