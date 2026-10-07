@@ -137,6 +137,8 @@ initContainers:
   - --add-header
   - {{ $headerForTagging | quote }}
   {{- end }}{{/* if $headerForTagging */}}
+  - --multipart-chunk-size-mb
+  - '120'
   workingDir: /work
   volumeMounts:
   - name: s3cmd-config
